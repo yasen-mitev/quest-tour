@@ -178,6 +178,30 @@ class Photo(Base):
     deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True, index=True)
 
 
+class RiddleRating(Base):
+    """One to five stars for a riddle (issue #38): one per phone per task, changeable."""
+
+    __tablename__ = "riddle_ratings"
+    __table_args__ = (UniqueConstraint("run_task_id", "device_id", name="uq_riddle_ratings_task_device"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_task_id: Mapped[int] = mapped_column(ForeignKey("run_tasks.id", ondelete="CASCADE"))
+    device_id: Mapped[str] = mapped_column(String(64))
+    stars: Mapped[int] = mapped_column(Integer)
+    rated_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class RunFeedback(Base):
+    """A word for the host at the end of the game (issue #38): one per phone per run."""
+
+    __tablename__ = "run_feedback"
+    __table_args__ = (UniqueConstraint("run_id", "device_id", name="uq_run_feedback_run_device"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(ForeignKey("game_runs.id", ondelete="CASCADE"))
+    device_id: Mapped[str] = mapped_column(String(64))
+    text: Mapped[str] = mapped_column(Text)
+    submitted_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
 class TeamAlbum(Base):
     """The stored memories album PDF of a finished run (issue #33): one per assignment, kept in the
     albums container for the host; ``deleted_at`` set means the host removed it (players get 410)."""

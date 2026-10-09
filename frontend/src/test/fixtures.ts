@@ -10,7 +10,8 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
       { number: 2, penalty_minutes: 15, available: false, opened: false, text: null, text_i18n: {} },
     ],
     wrong_attempts: 0, reveal_unlocked: false, reveal_unlocks_in_seconds: 1200,
-    completion: null, revealed_answer: null, reveal_penalty_minutes: 0, landmark: null, photo_count: 0, compass: null, ...overrides,
+    completion: null, revealed_answer: null, reveal_penalty_minutes: 0, landmark: null, photo_count: 0, compass: null,
+    rating: null, ...overrides,
   };
 }
 

@@ -18,6 +18,7 @@ const FILLED = {
   bulb: <><path d="M12 2a7 7 0 0 0-4.6 12.3c.8.7 1.6 1.7 1.6 2.7h6c0-1 .8-2 1.6-2.7A7 7 0 0 0 12 2z" /><rect x="9" y="18.5" width="6" height="2" rx="1" /><rect x="10" y="21" width="4" height="1.8" rx=".9" /></>,
   calendar: <><path fillRule="evenodd" d="M4 5h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 6v8h14v-8z" /><rect x="7" y="2" width="2.4" height="5" rx="1.2" /><rect x="14.6" y="2" width="2.4" height="5" rx="1.2" /></>,
   compass: <path fillRule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.5 5.5l-2.6 6.4-6.4 2.6 2.6-6.4z" />,
+  star: <path d="M12 2.8l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z" />,
 } satisfies Record<string, ReactElement>;
 
 // Stroke glyphs: lines and arrows have no fill to speak of

@@ -21,7 +21,7 @@ it("LoadingScreen shows the copy and the banner only when offline", () => {
 it("CorrectScreen names the landmark and continues to the photo", async () => {
   const onContinue = vi.fn();
   const landmark = { ...NEVSKY, name_i18n: { de: "Alexander-Newski-Kathedrale" } };
-  render(<CorrectScreen state={makeState({ task: makeTask({ completion: "answered", landmark }) })} frame={frame} language="de" onContinue={onContinue} />);
+  render(<CorrectScreen state={makeState({ task: makeTask({ completion: "answered", landmark }) })} frame={frame} language="de" onRate={vi.fn()} onContinue={onContinue} />);
   expect(screen.getByText("Correct!")).toBeInTheDocument();
   expect(screen.getByText("Alexander-Newski-Kathedrale")).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "Take a photo, create a memory" }));
@@ -37,7 +37,7 @@ it("RevealedScreen shows the answer and the charged penalty", async () => {
     text_i18n: { de: "Goldene Kuppeln leuchten über dem Platz, der meinen Namen trägt." },
     landmark: { ...NEVSKY, name_i18n: { de: "Alexander-Newski-Kathedrale" } },
   });
-  render(<RevealedScreen state={makeState({ task })} frame={frame} language="de" onContinue={onContinue} />);
+  render(<RevealedScreen state={makeState({ task })} frame={frame} language="de" onRate={vi.fn()} onContinue={onContinue} />);
   expect(screen.getByText("The answer")).toBeInTheDocument();
   expect(screen.getByText("Alexander Nevsky Cathedral")).toBeInTheDocument();
   expect(screen.getByText("+30 min added")).toBeInTheDocument();
@@ -83,13 +83,13 @@ it("LandmarkScreen on the last task shows the results card and translated touris
 });
 
 it("CorrectScreen falls back to base landmark name when translation is missing", () => {
-  render(<CorrectScreen state={makeState({ task: makeTask({ completion: "answered", landmark: NEVSKY }) })} frame={frame} language="de" onContinue={vi.fn()} />);
+  render(<CorrectScreen state={makeState({ task: makeTask({ completion: "answered", landmark: NEVSKY }) })} frame={frame} language="de" onRate={vi.fn()} onContinue={vi.fn()} />);
   expect(screen.getByText("Alexander Nevsky Cathedral")).toBeInTheDocument();
 });
 
 it("RevealedScreen falls back to base landmark name and recap when translation is missing", () => {
   const task = makeTask({ completion: "revealed", revealed_answer: "x", text_i18n: {}, landmark: NEVSKY });
-  render(<RevealedScreen state={makeState({ task })} frame={frame} language="de" onContinue={vi.fn()} />);
+  render(<RevealedScreen state={makeState({ task })} frame={frame} language="de" onRate={vi.fn()} onContinue={vi.fn()} />);
   expect(screen.getByText("Head there now – a team photo at Alexander Nevsky Cathedral unlocks the next riddle.")).toBeInTheDocument();
   expect(screen.getByText("Golden domes shine over the square that bears my name. I was built to honour soldiers who fell for this land's freedom. Who am I?")).toBeInTheDocument();
 });

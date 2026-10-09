@@ -6,10 +6,13 @@ import type { FrameProps } from "../components/GameFrame";
 import { Icon } from "../components/Icon";
 import { Leaderboard } from "../components/Leaderboard";
 import { Paragraphs } from "../components/Paragraphs";
+import { TeamFeedback } from "../components/TeamFeedback";
 import { Toast } from "../components/Toast";
 import { formatHms, formatPenalty, ordinal } from "../lib/format";
 
-export function FinishScreen({ state, frame, albumUrl }: { state: GameState; frame: FrameProps; albumUrl?: string }) {
+export function FinishScreen({ state, frame, albumUrl, onFeedback = () => {} }: {
+  state: GameState; frame: FrameProps; albumUrl?: string; onFeedback?(text: string): Promise<unknown> | void;
+}) {
   const results = state.results!;
   const { game, team } = state;
   const total = results.total_seconds ?? 0;
@@ -46,6 +49,7 @@ export function FinishScreen({ state, frame, albumUrl }: { state: GameState; fra
             <p className="qs-eyebrow qs-eyebrow--gold" id="host-label"><Icon name="gift" />From your host</p>
             <Paragraphs text={results.exit_message} />
           </section>
+          <TeamFeedback results={results} onFeedback={onFeedback} />
           {albumUrl && (
             <a className="qc-btn qc-btn--primary qc-btn--block" href={albumUrl}>
               <Icon name="gallery" />Open your memories album

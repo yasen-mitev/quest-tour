@@ -9,6 +9,7 @@ const LINKS = [
   { key: "teams", label: "Teams" },
   { key: "photos", label: "Photos" },
   { key: "albums", label: "Albums" },
+  { key: "feedback", label: "Feedback" },
 ];
 
 type AdminLayoutProps = { active: string; children: ReactNode };

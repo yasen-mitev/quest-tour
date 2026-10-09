@@ -61,6 +61,9 @@ export const api = {
     request<ActionResult>(`${base(token)}/hint`, { position, hint }),
   compass: (token: string) => request<ActionResult>(`${base(token)}/compass`, {}),
   reveal: (token: string, position: number) => request<ActionResult>(`${base(token)}/reveal`, { position }),
+  rate: (token: string, position: number, stars: number) =>
+    request<ActionResult>(`${base(token)}/rate`, { position, stars }),              // issue #38
+  feedback: (token: string, text: string) => request<ActionResult>(`${base(token)}/feedback`, { text }),
   reset: (token: string) => request<ActionResult>(`${base(token)}/reset`, {}),   // service (test) links only
   advance: (token: string, position: number) => request<ActionResult>(`${base(token)}/advance`, { position }),
   uploadPhoto(token: string, position: number, file: File, onProgress: (pct: number) => void): Promise<ActionResult> {

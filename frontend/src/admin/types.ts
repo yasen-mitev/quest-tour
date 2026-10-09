@@ -74,6 +74,11 @@ export interface TokenReveal {
   url: string;
 }
 
+/** What the players thought (issue #38) */
+export interface RiddleRatingOut { landmark_id: number; landmark_name: string; average: number; count: number; }
+export interface TeamCommentOut { id: number; team_name: string; game_name: string; submitted_at: string; text: string; }
+export interface FeedbackOut { riddles: RiddleRatingOut[]; comments: TeamCommentOut[]; }
+
 /** A stored memories-album PDF (issue #33) */
 export interface AlbumFileOut {
   id: number;

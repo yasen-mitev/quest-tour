@@ -2,10 +2,14 @@ import type { GameState } from "../api/types";
 import { Confetti } from "../components/art";
 import { GameFrame, type FrameProps } from "../components/GameFrame";
 import { Icon } from "../components/Icon";
+import { StarRating } from "../components/StarRating";
 import { pickText } from "../lib/i18n";
 
-export function CorrectScreen({ state, frame, language, onContinue }: { state: GameState; frame: FrameProps; language: string; onContinue(): void }) {
-  const landmark = state.task!.landmark;
+export function CorrectScreen({ state, frame, language, onContinue, onRate }: {
+  state: GameState; frame: FrameProps; language: string; onContinue(): void; onRate(stars: number): void;
+}) {
+  const task = state.task!;
+  const landmark = task.landmark;
   const landmarkName = pickText(landmark?.name ?? "", landmark?.name_i18n, language);
   return (
     <GameFrame
@@ -27,6 +31,7 @@ export function CorrectScreen({ state, frame, language, onContinue }: { state: G
         <p className="t-body t-muted">You explored a new landmark:</p>
         <p className="t-display-l">{landmarkName}</p>
       </div>
+      <StarRating value={task.rating} onChange={onRate} />
     </GameFrame>
   );
 }

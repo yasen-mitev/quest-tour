@@ -112,6 +112,29 @@
 .qs-sum__row dd.pen { color: var(--gold-700); font-family: var(--font-sans); }
 .qs-sum__total { border-top: 2px solid var(--gold-500); padding-top: var(--space-2); font-weight: 700; }
 
+/* Riddle rating (issue #38): a card of five 48 px stars after Correct / Revealed; static stars for an average */
+.qs-rate { width: 100%; box-sizing: border-box; display: grid; gap: var(--space-1); justify-items: center; text-align: center;
+           padding: var(--space-3) var(--space-4) var(--space-4); background: var(--surface-raised); border-radius: var(--radius-lg); box-shadow: var(--shadow-raised); }
+.qs-rate__stars { display: flex; gap: 0; }
+.qs-rate__star { width: var(--tap-min); height: var(--tap-min); display: grid; place-items: center; border: 0; padding: 0; background: transparent;
+                 color: var(--line); cursor: pointer; border-radius: var(--radius-pill); transition: color 0.12s ease, transform 0.12s ease; }
+.qs-rate__star svg { width: 34px; height: 34px; }
+.qs-rate__star.is-on { color: var(--gold-500); }
+.qs-rate__star:active { transform: scale(1.15); }
+.qs-rate__star:focus-visible { outline: 3px solid var(--focus); outline-offset: -2px; }
+.qs-rate__word { min-height: 20px; }
+.qs-rate__stars--static .qs-rate__star { width: 28px; height: 28px; cursor: default; position: relative; color: var(--line); }
+.qs-rate__stars--static .qs-rate__star svg { width: 26px; height: 26px; }
+.qs-rate__star.is-static::after { content: ""; position: absolute; inset: 0; width: var(--fill, 0%); overflow: hidden;
+                                  background: var(--gold-500); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.8l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z'/></svg>") no-repeat 1px 1px / 26px 26px;
+                                  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.8l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.7l-5.9 3.1 1.2-6.5L2.5 9.7l6.6-.9z'/></svg>") no-repeat 1px 1px / 26px 26px; }
+
+/* End of game: the team's average and a word for the host */
+.qs-feedback__average { display: flex; align-items: center; gap: var(--space-4); }
+.qs-feedback__number { margin: 0; }
+.qs-feedback__form { display: grid; gap: var(--space-3); }
+.qs-feedback__text { min-height: 112px; padding: var(--space-3) var(--space-4); line-height: 24px; resize: vertical; font-family: inherit; }
+
 /* Revealed answer */
 .qs-answer { background: var(--gold-100); border-radius: var(--radius-lg); padding: var(--space-4); display: grid; gap: var(--space-2); border: 2px solid var(--gold-500); }
 

@@ -6,7 +6,7 @@ const frame = { header: null, offline: false, notice: null, onNoticeDone: () => 
 const results = {
   elapsed_seconds: 8610, hints_used: 3, hint_penalty_minutes: 35, reveals_used: 0, reveal_penalty_minutes: 0,
   total_seconds: 10710, rank: 2, shared_rank: true, tasks_completed: 8, end_reason: "finished" as const,
-  exit_message: "Thank you for exploring Sofia with us!",
+  exit_message: "Thank you for exploring Sofia with us!", average_rating: 4.2, ratings_count: 6, feedback_submitted: false,
   leaderboard: [
     { rank: 1, team_name: "Night Owls", total_seconds: 9665, hints_used: 1, is_you: false },
     { rank: 2, team_name: "The Explorers", total_seconds: 10710, hints_used: 3, is_you: true },
@@ -25,7 +25,7 @@ it("shows the shared place, the breakdown, the highlighted row and the host mess
   expect(screen.getAllByText("02:58:30").length).toBeGreaterThanOrEqual(2);
   expect(container.querySelector("tr.is-you")).toHaveTextContent("You");
   expect(screen.getByText("Thank you for exploring Sofia with us!")).toBeInTheDocument();
-  expect(screen.queryByRole("button")).toBeNull();
+  expect(screen.queryByRole("button", { name: /continue|next/i })).toBeNull();   // the game is over
 });
 
 it("links to the memories album when the app knows the link (issue #33)", () => {

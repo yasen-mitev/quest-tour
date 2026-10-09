@@ -53,6 +53,14 @@ On a desktop the sheets show as true A4 pages; on a phone they flow as cards. Te
 copied. "Save as PDF" opens the print dialog with A4 pages and no browser header. Until the album API
 exists, `/album/preview` renders a mock album with dummy photos.
 
+**Riddle rating and a word for the host** (R-28, issue #38): on Correct and Revealed, a white card "Rate this
+riddle" with five 48 px stars; a tap saves the rating at once and the stars turn gold, with a word for the
+score (Too hard or unclear, Not great, It was OK, Good one, Loved it!); nothing blocks the photo button. On
+Finish and Time is up, after the host's message: a card "Your riddle ratings" with the team's average as a
+big number next to partially filled stars and "from N ratings" (or a line saying the team didn't rate), and
+a card "A word for your host" with a text box and "Send to your host", replaced by a thank-you once this
+phone has sent its comment.
+
 **Connection banner** (any screen, R-23): a slim banner `No connection – retrying…`, which disappears automatically when the connection is back.
 
 ## 5. Screens to mock

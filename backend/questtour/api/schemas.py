@@ -45,6 +45,7 @@ class TaskOut(BaseModel):
     landmark: LandmarkOut | None
     photo_count: int
     compass: CompassOut | None
+    rating: int | None  # this phone's 1–5 stars for the riddle (issue #38), once completed
 
 
 class ClockOut(BaseModel):
@@ -93,6 +94,9 @@ class ResultsOut(BaseModel):
     end_reason: Literal["finished", "max_duration", "window_closed"]
     exit_message: str
     leaderboard: list[LeaderboardRowOut]
+    average_rating: float | None  # the team's average over its riddle ratings (issue #38)
+    ratings_count: int
+    feedback_submitted: bool  # this phone has sent its word for the host
 
 
 class GameState(BaseModel):
@@ -157,6 +161,14 @@ class AnswerIn(PositionIn):
 
 class HintIn(PositionIn):
     hint: Literal[1, 2]
+
+
+class RateIn(PositionIn):
+    stars: int = Field(ge=1, le=5)
+
+
+class FeedbackIn(BaseModel):
+    text: str = Field(min_length=1, max_length=1000)
 
 
 RevealIn = AdvanceIn = PositionIn

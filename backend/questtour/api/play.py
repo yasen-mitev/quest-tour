@@ -8,7 +8,16 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from questtour.api.deps import DeviceDep, NowDep, SessionDep
-from questtour.api.schemas import ActionResult, AlbumOut, AnswerIn, GameState, HintIn, PositionIn
+from questtour.api.schemas import (
+    ActionResult,
+    AlbumOut,
+    AnswerIn,
+    FeedbackIn,
+    GameState,
+    HintIn,
+    PositionIn,
+    RateIn,
+)
 from questtour.imagetypes import sniff_photo
 from questtour.models import Assignment, GameRun
 from questtour.services import game as rules
@@ -16,6 +25,7 @@ from questtour.services.access import ensure_link_usable, find_assignment
 from questtour.services.album import album_available, build_album, find_run_photo
 from questtour.services.album_store import PDF, album_file_name, ensure_album
 from questtour.services.photos import save_photo
+from questtour.services.rating import rate_task, submit_feedback
 from questtour.services.reset import delete_photo_blobs, reset_run
 from questtour.services.state import build_state
 from questtour.storage import StorageUnavailable
@@ -51,7 +61,7 @@ def _open(
 
 
 def _respond(ctx: Ctx, outcome: rules.Outcome, action: str) -> ActionResult:
-    state = build_state(ctx.session, ctx.assignment, ctx.run, ctx.now)
+    state = build_state(ctx.session, ctx.assignment, ctx.run, ctx.now, ctx.device_id)
     ctx.session.commit()
     log.info("action=%s assignment=%s outcome=%s", action, ctx.assignment.id, outcome)
     return ActionResult(outcome=outcome, state=state)
@@ -60,7 +70,7 @@ def _respond(ctx: Ctx, outcome: rules.Outcome, action: str) -> ActionResult:
 @router.get("", response_model=GameState)
 def get_state(token: str, session: SessionDep, now: NowDep, device_id: DeviceDep) -> GameState:
     ctx = _open(session, token, now, device_id)
-    state = build_state(session, ctx.assignment, ctx.run, now)
+    state = build_state(session, ctx.assignment, ctx.run, now, device_id)
     session.commit()
     return state
 
@@ -131,6 +141,34 @@ def reveal(
         )
     )
     return _respond(ctx, outcome, "reveal")
+
+
+@router.post("/rate", response_model=ActionResult)
+def rate(
+    token: str, body: RateIn, session: SessionDep, now: NowDep, device_id: DeviceDep
+) -> ActionResult:
+    """Issue #38: one to five stars for a completed riddle, one rating per phone, changeable."""
+    ctx = _open(session, token, now, device_id)
+    outcome = (
+        rules.Outcome.STALE
+        if ctx.run is None
+        else rate_task(session, ctx.run, body.position, body.stars, device_id, now)
+    )
+    return _respond(ctx, outcome, "rate")
+
+
+@router.post("/feedback", response_model=ActionResult)
+def feedback(
+    token: str, body: FeedbackIn, session: SessionDep, now: NowDep, device_id: DeviceDep
+) -> ActionResult:
+    """Issue #38: a word for the host once the game is over, one per phone."""
+    ctx = _open(session, token, now, device_id)
+    outcome = (
+        rules.Outcome.STALE
+        if ctx.run is None
+        else submit_feedback(session, ctx.run, body.text, device_id, now)
+    )
+    return _respond(ctx, outcome, "feedback")
 
 
 @router.post("/advance", response_model=ActionResult)
