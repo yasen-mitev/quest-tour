@@ -43,13 +43,12 @@ export function AdminLayout({ active, children }: AdminLayoutProps) {
         >
           Logout
         </button>
-        <button
-          type="button"
-          className="admin-nav__cookies"
-          onClick={reopen}
-        >
-          Cookie settings
-        </button>
+        <div className="admin-nav__legal">
+          <a href="/privacy?from=admin">Privacy</a>
+          <a href="/terms?from=admin">Terms</a>
+          <a href="/contact?from=admin">Contact</a>
+          <button type="button" className="admin-nav__cookies" onClick={reopen}>Cookies</button>
+        </div>
         <AppVersion inverse />
       </nav>
       <main className="admin-main">{children}</main>
