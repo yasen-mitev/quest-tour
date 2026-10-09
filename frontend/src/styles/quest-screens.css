@@ -67,6 +67,7 @@
 
 .qs-note { display: grid; grid-template-columns: 32px 1fr; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: var(--surface-raised); box-shadow: var(--shadow-raised); align-items: start; }
 .qs-note svg { width: 32px; height: 32px; padding: 7px; border-radius: 50%; background: var(--patina-50); color: var(--patina-800); }
+.qs-cookie-settings { display: flex; justify-content: center; }   /* "Cookie settings" re-opens the consent banner */
 
 /* Welcome hero */
 .qs-hero { position: relative; background: var(--accent-strong); color: var(--on-accent); padding: var(--space-6) var(--space-4) var(--space-5); display: grid; gap: var(--space-3); overflow: hidden; border-bottom: 2px solid var(--gold-500); }
@@ -160,3 +161,15 @@
 .qs-skel { background: var(--surface-sunken); border-radius: var(--radius-sm); }
 @keyframes qs-spin { to { transform: rotate(360deg); } }
 .qs-spinner { animation: qs-spin 1.2s linear infinite; transform-origin: 50% 50%; }
+
+/* Legal & contact pages (issues #20/#22/#25): the link row lives on the landing, on the legal
+   pages themselves, and in the admin nav; the pages are plain text cards. */
+.qs-legal { display: flex; justify-content: center; gap: var(--space-4); margin-top: var(--space-2); }
+.qs-legal a { font: 700 15px/20px var(--font-sans); color: var(--patina-600); text-decoration: underline; text-underline-offset: 3px; }
+.qs-legal__back { justify-self: end; }  /* bottom right of the card */
+.qs-legal__section { display: grid; gap: var(--space-2); }
+.qs-legal__buttons { display: grid; gap: var(--space-2); }
+.qs-legal__settings {
+  font: 700 15px/20px var(--font-sans); color: var(--patina-600); background: none; border: 0; padding: 0;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}

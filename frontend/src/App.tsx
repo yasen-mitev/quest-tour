@@ -1,8 +1,10 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { AlbumPage } from "./album/AlbumPage";
+import { ConsentBanner } from "./components/ConsentBanner";
 import { GameApp } from "./game/GameApp";
 import { lastToken } from "./lib/storage";
 import { LoadingScreen } from "./screens/LoadingScreen";
+import { ContactScreen, PrivacyScreen, TermsScreen } from "./screens/LegalScreens";
 import { NotFoundScreen } from "./screens/NotFoundScreen";
 
 const AdminApp = lazy(async () => {
@@ -23,24 +25,41 @@ export function App({ path = window.location.pathname }: { path?: string }) {
 
   if (path.startsWith("/admin")) {
     return (
-      <Suspense fallback={<LoadingScreen offline={false} />}>
-        <AdminApp path={path} />
-      </Suspense>
+      <>
+        <ConsentBanner app="admin" />
+        <Suspense fallback={<LoadingScreen offline={false} />}>
+          <AdminApp path={path} />
+        </Suspense>
+      </>
     );
   }
 
   const match = /^\/play\/([^/]+)$/.exec(path);
   if (match) {
     const token = safeDecode(match[1]);
-    return token === null ? <NotFoundScreen /> : <GameApp token={token} />;
+    return withConsent(token === null ? <NotFoundScreen /> : <GameApp token={token} />);
   }
   const album = /^\/album\/([^/]+)$/.exec(path);
   if (album) {
     const token = safeDecode(album[1]);
-    return token === null ? <NotFoundScreen /> : <AlbumPage token={token} />;
+    return withConsent(token === null ? <NotFoundScreen /> : <AlbumPage token={token} />);
   }
-  if (path === "/") return <Home />;
-  return <NotFoundScreen />;
+  if (path === "/") return withConsent(<Home />);
+  if (path === "/privacy") return withConsent(<PrivacyScreen />);
+  if (path === "/terms") return withConsent(<TermsScreen />);
+  if (path === "/contact") return withConsent(<ContactScreen />);
+  return withConsent(<NotFoundScreen />);
+}
+
+/** The consent banner (cookie notice) is the first element of every player, album and admin page,
+ *  until the visitor answers it — see src/lib/consent.ts. */
+function withConsent(screen: ReactNode): ReactNode {
+  return (
+    <>
+      <ConsentBanner app="player" />
+      {screen}
+    </>
+  );
 }
 
 function safeDecode(segment: string): string | null {

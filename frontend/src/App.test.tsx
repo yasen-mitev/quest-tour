@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
 
@@ -15,6 +16,22 @@ describe("App", () => {
     render(<App path="/" />);
     expect(screen.getByText("Open your game link")).toBeInTheDocument();
     expect(screen.queryByText("Error 404")).not.toBeInTheDocument();
+  });
+
+  it("offers the legal and contact pages from the first page and serves them at their routes", () => {
+    const { unmount } = render(<App path="/" />);
+    for (const name of ["Privacy", "Terms", "Contact"]) {
+      expect(screen.getByRole("link", { name })).toHaveAttribute("href", `/${name.toLowerCase()}`);
+    }
+    unmount();
+    render(<App path="/privacy" />);
+    expect(screen.getByRole("heading", { name: "Privacy Policy" })).toBeInTheDocument();
+    unmount();
+    render(<App path="/terms" />);
+    expect(screen.getByRole("heading", { name: "Terms of Service" })).toBeInTheDocument();
+    unmount();
+    render(<App path="/contact" />);
+    expect(screen.getByRole("heading", { name: "Contact" })).toBeInTheDocument();
   });
 
   it("serves the team album preview at /album/preview and copying is allowed there", () => {
@@ -40,6 +57,22 @@ describe("App", () => {
     for (const type of ["copy", "cut", "contextmenu", "selectstart"]) {
       expect(prevent(type), type).toBe(true);
     }
+  });
+
+  it.each(["/", "/admin", "/play/some-token", "/album/preview", "/no/such/page"])(
+    "shows the cookie consent banner on %s until an answer is stored",
+    (path) => {
+      render(<App path={path} />);
+      expect(screen.getByRole("dialog", { name: "About cookies" })).toBeInTheDocument();
+    },
+  );
+
+  it("dismisses the cookie consent banner once an answer is stored", async () => {
+    const user = userEvent.setup();
+    render(<App path="/" />);
+    expect(screen.getByRole("dialog", { name: "About cookies" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Decline" }));
+    expect(screen.queryByRole("dialog", { name: "About cookies" })).not.toBeInTheDocument();
   });
 
   it("still allows copy/selection inside the answer input", () => {

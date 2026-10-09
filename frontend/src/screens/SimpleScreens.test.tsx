@@ -127,3 +127,8 @@ it("NotFoundScreen shows the 404 caption only for the default title", () => {
   expect(screen.getByText("Open your game link")).toBeInTheDocument();
   expect(screen.queryByText("Error 404")).toBeNull();
 });
+
+it("NotFoundScreen (the landing without a team link) offers the legal and contact pages", () => {
+  render(<NotFoundScreen title="Open your game link" />);
+  expect(screen.getByRole("contentinfo", { name: "Legal and contact" })).toBeInTheDocument();
+});

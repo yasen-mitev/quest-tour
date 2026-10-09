@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AppVersion } from "../../components/AppVersion";
+import { useConsent } from "../../lib/consent";
 import { adminApi } from "../api";
 
 const LINKS = [
@@ -15,6 +16,7 @@ const LINKS = [
 type AdminLayoutProps = { active: string; children: ReactNode };
 
 export function AdminLayout({ active, children }: AdminLayoutProps) {
+  const { reopen } = useConsent();
   const handleLogout = async () => {
     try {
       await adminApi.logout();
@@ -42,6 +44,12 @@ export function AdminLayout({ active, children }: AdminLayoutProps) {
         >
           Logout
         </button>
+        <div className="admin-nav__legal">
+          <a href="/privacy?from=admin">Privacy</a>
+          <a href="/terms?from=admin">Terms</a>
+          <a href="/contact?from=admin">Contact</a>
+          <button type="button" className="admin-nav__cookies" onClick={reopen}>Cookies</button>
+        </div>
         <AppVersion inverse />
       </nav>
       <main className="admin-main">{children}</main>
