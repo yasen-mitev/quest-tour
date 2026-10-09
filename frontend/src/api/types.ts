@@ -10,6 +10,7 @@ export interface Task {
   reveal_unlocked: boolean; reveal_unlocks_in_seconds: number | null;
   completion: "answered" | "revealed" | null; revealed_answer: string | null; reveal_penalty_minutes: number;
   landmark: LandmarkInfo | null; photo_count: number; compass: Compass | null;
+  rating: number | null;          // this phone's 1–5 stars for the riddle (issue #38), once it is completed
 }
 export interface Clock { elapsed_seconds: number; running: boolean; penalty_minutes: number; remaining_seconds: number | null; warning: boolean; }
 export interface GameInfo {
@@ -23,6 +24,9 @@ export interface Results {
   reveal_penalty_minutes: number; total_seconds: number | null; rank: number | null; shared_rank: boolean;
   tasks_completed: number; end_reason: "finished" | "max_duration" | "window_closed";
   exit_message: string; leaderboard: LeaderboardRow[];
+  average_rating: number | null;  // the team's average over its riddle ratings (issue #38), null without any
+  ratings_count: number;
+  feedback_submitted: boolean;    // the team's closing comment has been sent
 }
 export interface GameState {
   version: number; service: boolean; status: Status; phase: Phase | null; position: number; game: GameInfo; team: { name: string };

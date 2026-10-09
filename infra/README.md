@@ -97,11 +97,31 @@ Do these in this order. The order is forced: *Infrastructure (Terraform)* can on
    - run `uv run sync-config`;
    - commit `teams.yaml`. That push does not trigger a deploy.
 
+## 3.1 Admin panel (Entra sign-in)
+
+The admin panel at `/admin` signs in through Microsoft Entra. Prerequisites outside this repo:
+
+- An **Entra app registration** (Web platform) with redirect URI
+  `https://app-<name>.azurewebsites.net/api/admin/auth/callback` (derive it from
+  `terraform output web_app_url`) and delegated Graph permission `User.Read` (admin consent granted).
+- An **Entra group** whose members may use the panel; its Object ID becomes
+  `ADMIN_ENTRA_GROUP_OBJECT_ID`.
+
+Then wire the values into GitHub (see §4) and run Infra `plan` → `apply`. The apply sets
+`ADMIN_AUTH_PROVIDER=entra` and the related app settings, and App Service restarts with them.
+
+## 3.2 Admin panel (developer sign-in, optional)
+
+For a local admin panel, set `ADMIN_AUTH_PROVIDER=dev` and `ADMIN_DEV_EMAILS` in `backend/.env`
+(see `backend/.env.example`). Never set `ADMIN_AUTH_PROVIDER=dev` on App Service: the prod plan
+pins `entra`.
+
 ## 4. GitHub variables
 
-All are repository-scope Actions variables. There are **no secrets**: Azure login is OIDC.
-`bootstrap.sh` sets all of them except the optional `TF_HOST_PRINCIPAL_OBJECT_IDS` and
-`DEPLOY_ENABLED`.
+All are repository-scope Actions variables. Azure login is OIDC, so there are **no Azure
+secrets**; the only GitHub **secrets** are the admin panel's Entra client secret and session
+secret (see §3.1). `bootstrap.sh` sets all of them except the optional
+`TF_HOST_PRINCIPAL_OBJECT_IDS`, `DEPLOY_ENABLED` and the admin panel entries.
 
 | Variable | Meaning |
 |---|---|
@@ -117,6 +137,9 @@ All are repository-scope Actions variables. There are **no secrets**: Azure logi
 | `TF_HOST_PRINCIPAL_OBJECT_IDS` | optional JSON list of host staff object IDs (photo access) |
 | `TF_BUDGET_CONTACT_EMAILS` | JSON list of budget alert e-mail addresses |
 | `DEPLOY_ENABLED` | set by hand in first-time setup step 7. `true` lets pushes to `main` deploy; anything else pauses auto-deploys, while manual *Deploy* runs still work |
+| `ADMIN_ENTRA_TENANT_ID`, `ADMIN_ENTRA_CLIENT_ID`, `ADMIN_ENTRA_GROUP_OBJECT_ID` | admin panel: Entra tenant, app registration client ID, and the Object ID of the admin group (§3.1) |
+| `ADMIN_ENTRA_CLIENT_SECRET` | **secret**: client secret of the admin panel Entra app (§3.1) |
+| `ADMIN_SESSION_SECRET` | **secret**: ≥32-byte random string signing admin session cookies. Generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
 
 ## 5. Budget start date
 

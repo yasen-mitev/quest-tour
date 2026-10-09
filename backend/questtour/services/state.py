@@ -35,6 +35,7 @@ from questtour.services.game import (
 )
 from questtour.services.i18n import pick_text
 from questtour.services.leaderboard import leaderboard_rows
+from questtour.services.rating import device_rating, feedback_submitted, run_average
 
 
 def image_url(blob_name: str | None) -> str | None:
@@ -105,7 +106,14 @@ def build_clock(run: GameRun, assignment: Assignment, now: datetime) -> ClockOut
     )
 
 
-def build_task(task: RunTask, game: Game, now: datetime, *, instant: bool = False) -> TaskOut:
+def build_task(
+    task: RunTask,
+    game: Game,
+    now: datetime,
+    *,
+    instant: bool = False,
+    rating: int | None = None,
+) -> TaskOut:
     landmark = task.landmark
     completed = task.completed_at is not None
     hints: list[HintOut] = []
@@ -162,14 +170,20 @@ def build_task(task: RunTask, game: Game, now: datetime, *, instant: bool = Fals
         else None,
         photo_count=task.photo_count,
         compass=compass,
+        rating=rating if completed else None,
     )
 
 
 def build_results(
-    session: Session, run: GameRun, assignment: Assignment, now: datetime
+    session: Session,
+    run: GameRun,
+    assignment: Assignment,
+    now: datetime,
+    device_id: str | None = None,
 ) -> ResultsOut:
     rows = leaderboard_rows(session, assignment.game_id, viewer_run_id=run.id)
     me = next((row for row in rows if row.is_you), None)
+    average, count = run_average(session, run)
     return ResultsOut(
         elapsed_seconds=elapsed_seconds(run, now),
         hints_used=hints_used(run),
@@ -183,11 +197,18 @@ def build_results(
         end_reason=run.end_reason,
         exit_message=assignment.exit_message,
         leaderboard=rows,
+        average_rating=average,
+        ratings_count=count,
+        feedback_submitted=feedback_submitted(session, run, device_id),
     )
 
 
 def build_state(
-    session: Session, assignment: Assignment, run: GameRun | None, now: datetime
+    session: Session,
+    assignment: Assignment,
+    run: GameRun | None,
+    now: datetime,
+    device_id: str | None = None,
 ) -> GameState:
     game, team = assignment.game, assignment.team
     service = is_service(assignment)
@@ -216,6 +237,10 @@ def build_state(
         game=build_game(game, run.tasks),
         team=TeamOut(name=team.name),
         clock=build_clock(run, assignment, now),
-        task=build_task(task, game, now, instant=service) if task is not None else None,
-        results=build_results(session, run, assignment, now) if phase == "results" else None,
+        task=(
+            build_task(task, game, now, instant=service, rating=device_rating(session, task, device_id))
+            if task is not None
+            else None
+        ),
+        results=build_results(session, run, assignment, now, device_id) if phase == "results" else None,
     )

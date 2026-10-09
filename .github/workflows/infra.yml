@@ -47,6 +47,12 @@ jobs:
       TF_VAR_host_principal_object_ids: ${{ vars.TF_HOST_PRINCIPAL_OBJECT_IDS || '[]' }}
       TF_VAR_budget_contact_emails: ${{ vars.TF_BUDGET_CONTACT_EMAILS }}
       TF_VAR_deploy_principal_object_id: ${{ vars.TF_DEPLOY_PRINCIPAL_OBJECT_ID }}
+      # Admin panel Entra auth: client/session secrets are GitHub secrets, the rest are variables.
+      TF_VAR_admin_entra_tenant_id:       ${{ vars.ADMIN_ENTRA_TENANT_ID }}
+      TF_VAR_admin_entra_client_id:       ${{ vars.ADMIN_ENTRA_CLIENT_ID }}
+      TF_VAR_admin_entra_client_secret:   ${{ secrets.ADMIN_ENTRA_CLIENT_SECRET }}
+      TF_VAR_admin_entra_group_object_id: ${{ vars.ADMIN_ENTRA_GROUP_OBJECT_ID }}
+      TF_VAR_admin_session_secret:        ${{ secrets.ADMIN_SESSION_SECRET }}
     steps:
       - name: Guard (main only, explicit confirmation for apply)
         working-directory: .
@@ -62,7 +68,9 @@ jobs:
           fi
           for name in ARM_CLIENT_ID ARM_TENANT_ID ARM_SUBSCRIPTION_ID TF_VAR_app_name \
             TF_VAR_resource_group_name TF_VAR_admin_principal_object_id TF_VAR_admin_principal_name \
-            TF_VAR_budget_contact_emails TF_VAR_deploy_principal_object_id; do
+            TF_VAR_budget_contact_emails TF_VAR_deploy_principal_object_id \
+            TF_VAR_admin_entra_tenant_id TF_VAR_admin_entra_client_id TF_VAR_admin_entra_group_object_id \
+            TF_VAR_admin_entra_client_secret TF_VAR_admin_session_secret; do
             if [ -z "${!name}" ]; then
               echo "::error::$name is empty: set its repository variable (infra/README.md)"; exit 1
             fi

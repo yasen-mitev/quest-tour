@@ -1,10 +1,13 @@
 import type { GameState } from "../api/types";
 import { GameFrame, type FrameProps } from "../components/GameFrame";
 import { Icon } from "../components/Icon";
+import { StarRating } from "../components/StarRating";
 import { formatPenalty } from "../lib/format";
 import { pickText } from "../lib/i18n";
 
-export function RevealedScreen({ state, frame, language, onContinue }: { state: GameState; frame: FrameProps; language: string; onContinue(): void }) {
+export function RevealedScreen({ state, frame, language, onContinue, onRate }: {
+  state: GameState; frame: FrameProps; language: string; onContinue(): void; onRate(stars: number): void;
+}) {
   const task = state.task!;
   const landmarkName = pickText(task.landmark?.name ?? "the landmark", task.landmark?.name_i18n, language);
   const recap = pickText(task.text, task.text_i18n, language);
@@ -32,6 +35,7 @@ export function RevealedScreen({ state, frame, language, onContinue }: { state: 
         <p className="qs-eyebrow qs-eyebrow--muted"><Icon name="riddle" />The riddle was</p>
         <p className="t-body t-muted">{recap}</p>
       </div>
+      <StarRating value={task.rating} onChange={onRate} />
     </GameFrame>
   );
 }

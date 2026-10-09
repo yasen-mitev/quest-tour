@@ -48,6 +48,10 @@
 .admin-nav__legal a:focus-visible, .admin-nav__cookies:focus-visible { outline: 3px solid var(--gold-300); outline-offset: 2px; }
 .admin-login .qc-input:focus-visible, .admin-login .qc-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
+/* Feedback (issue #38): stars next to the average, comments in full */
+.admin-rating { gap: var(--space-3); }
+.admin-comment__text { margin: var(--space-2) 0 0; white-space: pre-wrap; }
+
 /* Work area */
 .admin-main { flex: 1 1 auto; padding: var(--space-6) var(--space-5); overflow: auto; }
 .admin-section { max-width: 960px; display: grid; gap: var(--space-4); }

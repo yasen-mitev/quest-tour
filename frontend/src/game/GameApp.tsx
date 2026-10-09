@@ -53,6 +53,8 @@ export function GameApp({ token }: { token: string }) {
   };
   const ack = () => setUi((u) => ({ ...u, ackedPosition: position }));
   const albumUrl = `/album/${encodeURIComponent(token)}`;   // the memories album (issue #33) uses the same link
+  const rate = (stars: number) => void game.act(() => api.rate(token, position, stars));   // issue #38
+  const feedback = (text: string) => game.act(() => api.feedback(token, text));
 
   const screen = renderScreen();
   return (
@@ -77,9 +79,9 @@ export function GameApp({ token }: { token: string }) {
                            onCompass={() => game.act(() => api.compass(token))}
                            onReveal={() => game.act(() => api.reveal(token, position))} />;
       case "correct":
-        return <CorrectScreen state={state} frame={frame} language={language} onContinue={ack} />;
+        return <CorrectScreen state={state} frame={frame} language={language} onContinue={ack} onRate={rate} />;
       case "revealed":
-        return <RevealedScreen state={state} frame={frame} language={language} onContinue={ack} />;
+        return <RevealedScreen state={state} frame={frame} language={language} onContinue={ack} onRate={rate} />;
       case "photo":
         return <PhotoScreen key={position} state={state} frame={frame}
                             upload={(file, onProgress) => game.track(api.uploadPhoto(token, position, file, onProgress))}
@@ -96,9 +98,9 @@ export function GameApp({ token }: { token: string }) {
         return <LandmarkScreen state={state} frame={frame} language={language}
                                onNext={() => game.act(() => api.advance(token, position))} />;
       case "finish":
-        return <FinishScreen state={state} frame={frame} albumUrl={albumUrl} />;
+        return <FinishScreen state={state} frame={frame} albumUrl={albumUrl} onFeedback={feedback} />;
       case "timesup":
-        return <TimesUpScreen state={state} frame={frame} albumUrl={albumUrl} />;
+        return <TimesUpScreen state={state} frame={frame} albumUrl={albumUrl} onFeedback={feedback} />;
     }
   }
 }

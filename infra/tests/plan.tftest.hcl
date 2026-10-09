@@ -16,14 +16,19 @@ mock_provider "azurerm" {
 }
 
 variables {
-  app_name                   = "qt-test"
-  resource_group_name        = "rg-qt-test"
-  admin_principal_object_id  = "11111111-1111-1111-1111-111111111111"
-  admin_principal_name       = "admin_contoso.com#EXT#@tenant.onmicrosoft.com"
-  admin_ip_addresses         = { home = "203.0.113.10" }
-  host_principal_object_ids  = ["33333333-3333-3333-3333-333333333333"]
-  budget_contact_emails      = ["ops@contoso.com"]
-  deploy_principal_object_id = "22222222-2222-2222-2222-222222222222"
+  app_name                    = "qt-test"
+  resource_group_name         = "rg-qt-test"
+  admin_principal_object_id   = "11111111-1111-1111-1111-111111111111"
+  admin_principal_name        = "admin_contoso.com#EXT#@tenant.onmicrosoft.com"
+  admin_ip_addresses          = { home = "203.0.113.10" }
+  host_principal_object_ids   = ["33333333-3333-3333-3333-333333333333"]
+  budget_contact_emails       = ["ops@contoso.com"]
+  deploy_principal_object_id  = "22222222-2222-2222-2222-222222222222"
+  admin_entra_tenant_id       = "00000000-0000-0000-0000-000000000010"
+  admin_entra_client_id       = "00000000-0000-0000-0000-000000000011"
+  admin_entra_client_secret   = "test-client-secret"
+  admin_entra_group_object_id = "44444444-4444-4444-4444-444444444444"
+  admin_session_secret        = "test-session-secret-at-least-32-chars-long"
 }
 
 run "prod_shape" {
@@ -49,7 +54,11 @@ run "prod_shape" {
       azurerm_linux_web_app.app.app_settings["PUBLIC_BASE_URL"] == "https://app-qt-test.azurewebsites.net" &&
       azurerm_linux_web_app.app.app_settings["AZURE_STORAGE_ACCOUNT_URL"] == "https://stqttest.blob.core.windows.net" &&
       azurerm_linux_web_app.app.app_settings["STATIC_DIR"] == "static" &&
-      azurerm_linux_web_app.app.app_settings["SCM_DO_BUILD_DURING_DEPLOYMENT"] == "true"
+      azurerm_linux_web_app.app.app_settings["SCM_DO_BUILD_DURING_DEPLOYMENT"] == "true" &&
+      azurerm_linux_web_app.app.app_settings["ADMIN_AUTH_PROVIDER"] == "entra" &&
+      azurerm_linux_web_app.app.app_settings["ADMIN_SESSION_SECURE"] == "true" &&
+      azurerm_linux_web_app.app.app_settings["ADMIN_ENTRA_REDIRECT_URI"] == "https://app-qt-test.azurewebsites.net/api/admin/auth/callback" &&
+      azurerm_linux_web_app.app.app_settings["ADMIN_ENTRA_GROUP_OBJECT_ID"] == "44444444-4444-4444-4444-444444444444"
     )
     error_message = "app settings must match what questtour.settings and startup.sh expect"
   }

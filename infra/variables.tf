@@ -52,6 +52,33 @@ variable "deploy_principal_object_id" {
   type        = string
 }
 
+variable "admin_entra_tenant_id" {
+  description = "Entra tenant hosting the admin panel client app."
+  type        = string
+}
+
+variable "admin_entra_client_id" {
+  description = "Application (client) ID of the admin panel Entra app registration."
+  type        = string
+}
+
+variable "admin_entra_client_secret" {
+  description = "Client secret of the admin panel Entra app registration."
+  type        = string
+  sensitive   = true
+}
+
+variable "admin_entra_group_object_id" {
+  description = "Entra group allowed to use the admin panel."
+  type        = string
+}
+
+variable "admin_session_secret" {
+  description = ">=32-byte random secret signing admin session cookies."
+  type        = string
+  sensitive   = true
+}
+
 variable "budget_amount" {
   type    = number
   default = 45

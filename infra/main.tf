@@ -31,5 +31,15 @@ locals {
     IMAGES_CONTAINER               = azurerm_storage_container.images.name
     ALBUMS_CONTAINER               = azurerm_storage_container.albums.name
     STATIC_DIR                     = "static"
+    # Admin panel auth (Microsoft Entra). Redirect URI must match the Entra app registration.
+    ADMIN_AUTH_PROVIDER           = "entra"
+    ADMIN_SESSION_SECRET          = var.admin_session_secret
+    ADMIN_SESSION_SECURE          = "true"
+    ADMIN_SESSION_MAX_AGE_MINUTES = "720"
+    ADMIN_ENTRA_TENANT_ID         = var.admin_entra_tenant_id
+    ADMIN_ENTRA_CLIENT_ID         = var.admin_entra_client_id
+    ADMIN_ENTRA_CLIENT_SECRET     = var.admin_entra_client_secret
+    ADMIN_ENTRA_REDIRECT_URI      = "${local.public_base_url}/api/admin/auth/callback"
+    ADMIN_ENTRA_GROUP_OBJECT_ID   = var.admin_entra_group_object_id
   }
 }

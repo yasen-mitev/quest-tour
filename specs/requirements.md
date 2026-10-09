@@ -141,8 +141,8 @@ Mock-ups of every screen and state: [frontend-mocks/](../frontend-mocks/README.m
 | Hint / Compass / Reveal confirmation | Shows the penalty and asks to confirm; then shows the hint, compass or the answer. |
 | Photo upload | Take or choose a photo; "Photo saved" confirmation; retry on failure. |
 | Landmark info | Tourist information, picture, Next riddle button (See results after the last task). |
-| Finish | Total time, leaderboard, exit message. |
-| Time is up | Message that time ran out, exit message, leaderboard. |
+| Finish | Total time, leaderboard, exit message, the team's average riddle rating and a word for the host (R-28), link to the memories album. |
+| Time is up | Message that time ran out, exit message, leaderboard, the team's average riddle rating and a word for the host (R-28). |
 | Link not valid | Shown for unknown or reissued tokens and outside the validity window. |
 | 404 Not found | Shown for any URL that doesn't match a page in the app (e.g. a mistyped or truncated link). Friendly "Page not found" message telling players to open the exact link they received from the host. Shows no game data, and the server returns HTTP 404. |
 
@@ -177,3 +177,4 @@ Mock-ups of every screen and state: [frontend-mocks/](../frontend-mocks/README.m
   again from the beginning. Service runs never appear on any leaderboard.
 - **R-26 Compass.** Each task can offer a compass that shows the direction from the team to the task's landmark. Opening it adds **+5 min**. Before it opens, a confirmation shows the penalty. Once opened, it stays visible until the task is completed; it is charged at most once per task. It does not carry over to the next task.
 - **R-27 Compass availability.** The compass is available as soon as the task is shown. A landmark without coordinates has no compass; the button is hidden.
+- **R-28 Riddle rating and feedback.** Right after a riddle is solved or revealed, each phone may rate it with one to five stars; the rating is optional, free of penalty, changeable, and one per phone per riddle. The Finish and Time is up screens show the team's average over all its ratings with their count, and let each phone send one comment to the host once the game is over. The host sees, in the admin panel, every riddle's average across all teams and the teams' comments. Ratings and comments never change the game state or its version.

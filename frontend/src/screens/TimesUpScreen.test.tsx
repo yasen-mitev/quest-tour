@@ -6,7 +6,7 @@ const frame = { header: null, offline: false, notice: null, onNoticeDone: () => 
 const results = (end_reason: "max_duration" | "window_closed") => ({
   elapsed_seconds: 14400, hints_used: 0, hint_penalty_minutes: 0, reveals_used: 0, reveal_penalty_minutes: 0,
   total_seconds: null, rank: null, shared_rank: false, tasks_completed: 5, end_reason,
-  exit_message: "Thank you!",
+  exit_message: "Thank you!", average_rating: null, ratings_count: 0, feedback_submitted: false,
   leaderboard: [{ rank: 1, team_name: "Night Owls", total_seconds: 9665, hints_used: 1, is_you: false }],
 });
 const state = (reason: "max_duration" | "window_closed") =>

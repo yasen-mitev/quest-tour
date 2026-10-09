@@ -3,6 +3,7 @@ import type {
   AlbumFileOut,
   AlbumRowOut,
   AssignmentCreate,
+  FeedbackOut,
   AssignmentOut,
   ConflictBody,
   Game,
@@ -182,6 +183,7 @@ export const adminApi = {
   deleteTeamPhoto: (id: number) =>
     adminRequest<{ deleted: boolean }>(`/api/admin/photos/${id}`, undefined, "DELETE"),
   albums: () => adminRequest<AlbumRowOut[]>("/api/admin/albums", undefined, "GET"),
+  feedback: () => adminRequest<FeedbackOut>("/api/admin/feedback", undefined, "GET"),
   generateAlbum: (assignmentId: number) =>
     adminRequest<AlbumFileOut>(`/api/admin/albums/${assignmentId}/generate`, {}, "POST"),
   deleteAlbum: (id: number) =>
