@@ -126,6 +126,13 @@ All of these must pass. There is no staging environment; `main` is what gets dep
 - `backend/.env` is git-ignored. Never commit it.
 - `backend/config/teams.yaml` holds **live game links** after a `sync-config` run. It must be
   committed (this repo is private), but never copy tokens into code, tests, logs or issue text.
+- **Config changes are applied to production by hand, not by deploy.** `backend/config/` is never
+  part of the deploy package (it holds live token files), and the app only seeds an empty database,
+  so edits to `landmarks.yaml` / `games.yaml` (translations, game rules, validity windows) reach the
+  production database only when someone runs `sync-config` against prod — infra/README.md,
+  first-time setup step 8, using its `admin_sync_config_env` output. A missed sync shows up as
+  silently missing data, not an error: the language menu did not appear because the new translations
+  were in the repo but never synced. Commit `teams.yaml` after the run if it changed.
 - Game rule edits (max duration, reveal N/X/P, validity windows) **apply live to running games**;
   only a run's landmark order is frozen. Consider in-progress games when touching config handling.
 - `accepted_answers[0]` is the answer shown when a team reveals it — order matters.
