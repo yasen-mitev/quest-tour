@@ -138,3 +138,10 @@
 .qs-skel { background: var(--surface-sunken); border-radius: var(--radius-sm); }
 @keyframes qs-spin { to { transform: rotate(360deg); } }
 .qs-spinner { animation: qs-spin 1.2s linear infinite; transform-origin: 50% 50%; }
+
+/* Legal & contact pages (issues #20/#22/#25): the link row lives on the landing, on the legal
+   pages themselves, and in the admin nav; the pages are plain text cards. */
+.qs-legal { display: flex; justify-content: center; gap: var(--space-4); margin-top: var(--space-2); }
+.qs-legal a { font: 700 15px/20px var(--font-sans); color: var(--patina-600); text-decoration: underline; text-underline-offset: 3px; }
+.qs-legal__section { display: grid; gap: var(--space-2); }
+.qs-legal__buttons { display: grid; gap: var(--space-2); }

@@ -1,4 +1,5 @@
 import { Icon } from "../components/Icon";
+import { LegalLinks } from "./LegalScreens";
 
 const DEFAULT_TITLE = "Page not found";
 
@@ -12,6 +13,7 @@ export function NotFoundScreen({ title = DEFAULT_TITLE }: { title?: string }) {
           <p className="t-body">Please open the exact link you received from your host.</p>
         </div>
         {title === DEFAULT_TITLE && <p className="t-caption">Error 404</p>}
+        <LegalLinks />
       </main>
     </div>
   );

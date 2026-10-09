@@ -19,7 +19,10 @@ export function ConsentBanner({ app }: { app: "player" | "admin" }) {
     <div className="qc-consent-scrim">
       <section className="qc-consent" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <h2 className="qc-consent__title" id={titleId}>About cookies</h2>
-        <p className="t-body">{TEXTS[app]}</p>
+        <p className="t-body">
+        {TEXTS[app]}{" "}
+        <a href="/privacy">Privacy policy</a>
+      </p>
         <div className="qc-consent__actions">
           <button type="button" className="qc-btn qc-btn--secondary qc-btn--block" onClick={accept}>Accept</button>
           <button type="button" className="qc-btn qc-btn--secondary qc-btn--block" onClick={decline}>Decline</button>

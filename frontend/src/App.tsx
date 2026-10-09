@@ -4,6 +4,7 @@ import { ConsentBanner } from "./components/ConsentBanner";
 import { GameApp } from "./game/GameApp";
 import { lastToken } from "./lib/storage";
 import { LoadingScreen } from "./screens/LoadingScreen";
+import { ContactScreen, PrivacyScreen, TermsScreen } from "./screens/LegalScreens";
 import { NotFoundScreen } from "./screens/NotFoundScreen";
 
 const AdminApp = lazy(async () => {
@@ -44,6 +45,9 @@ export function App({ path = window.location.pathname }: { path?: string }) {
     return withConsent(token === null ? <NotFoundScreen /> : <AlbumPage token={token} />);
   }
   if (path === "/") return withConsent(<Home />);
+  if (path === "/privacy") return withConsent(<PrivacyScreen />);
+  if (path === "/terms") return withConsent(<TermsScreen />);
+  if (path === "/contact") return withConsent(<ContactScreen />);
   return withConsent(<NotFoundScreen />);
 }
 

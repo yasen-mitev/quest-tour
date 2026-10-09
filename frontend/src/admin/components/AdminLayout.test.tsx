@@ -41,6 +41,13 @@ describe("AdminLayout", () => {
     expect(version.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
   });
 
+  it("offers the legal and contact pages at the foot of the sidebar", () => {
+    render(<AdminLayout active="dashboard">Content</AdminLayout>);
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/contact");
+  });
+
   it("re-opens the consent banner from the Cookie settings link", async () => {
     const user = userEvent.setup();
     localStorage.setItem(

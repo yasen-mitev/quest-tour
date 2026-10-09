@@ -11,6 +11,7 @@ describe("ConsentBanner", () => {
     expect(screen.getByRole("dialog", { name: "About cookies" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Accept" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Decline" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Privacy policy" })).toHaveAttribute("href", "/privacy");
   });
 
   it("names what the player app stores: team link and language choice", () => {

@@ -18,6 +18,22 @@ describe("App", () => {
     expect(screen.queryByText("Error 404")).not.toBeInTheDocument();
   });
 
+  it("offers the legal and contact pages from the first page and serves them at their routes", () => {
+    const { unmount } = render(<App path="/" />);
+    for (const name of ["Privacy", "Terms", "Contact"]) {
+      expect(screen.getByRole("link", { name })).toHaveAttribute("href", `/${name.toLowerCase()}`);
+    }
+    unmount();
+    render(<App path="/privacy" />);
+    expect(screen.getByRole("heading", { name: "Privacy Policy" })).toBeInTheDocument();
+    unmount();
+    render(<App path="/terms" />);
+    expect(screen.getByRole("heading", { name: "Terms of Service" })).toBeInTheDocument();
+    unmount();
+    render(<App path="/contact" />);
+    expect(screen.getByRole("heading", { name: "Contact" })).toBeInTheDocument();
+  });
+
   it("serves the team album preview at /album/preview and copying is allowed there", () => {
     render(<App path="/album/preview" />);
     expect(screen.getByText("Team album")).toBeInTheDocument();

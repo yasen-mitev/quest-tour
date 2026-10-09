@@ -50,6 +50,9 @@ export function AdminLayout({ active, children }: AdminLayoutProps) {
         >
           Cookie settings
         </button>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/contact">Contact</a>
         <AppVersion inverse />
       </nav>
       <main className="admin-main">{children}</main>
