@@ -28,7 +28,8 @@ it("shows the game name, the riddle count and the team", () => {
 
 it("shows the running version in the footer (issue #29)", () => {
   renderCover();
-  expect(screen.getByRole("contentinfo")).toHaveTextContent(versionLabel(APP_VERSION));
+  expect(screen.getAllByRole("contentinfo").find((f) => f.textContent?.includes(versionLabel(APP_VERSION))))
+    .toBeDefined();
 });
 
 it("offers the language menu and continues to the Welcome page", async () => {
@@ -40,4 +41,11 @@ it("offers the language menu and continues to the Welcome page", async () => {
   expect(onLanguageChange).toHaveBeenCalledWith("de");
   await userEvent.click(screen.getByRole("button", { name: "How it works" }));
   expect(onContinue).toHaveBeenCalledTimes(1);
+});
+
+it("offers the legal and contact pages next to the How it works button", () => {
+  renderCover();
+  expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
+  expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
+  expect(screen.getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/contact");
 });

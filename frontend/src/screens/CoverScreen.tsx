@@ -6,6 +6,7 @@ import type { FrameProps } from "../components/GameFrame";
 import { Icon } from "../components/Icon";
 import { LanguageToggle } from "../components/LanguageToggle";
 import { Toast } from "../components/Toast";
+import { LegalLinks } from "./LegalScreens";
 
 /** The first screen of a team link before the game starts: the skyline, the titles and one button that
  *  opens the Welcome page (intro, rules, Start). It is shown once per page load; nothing is sent to the server. */
@@ -29,6 +30,7 @@ export function CoverScreen({ state, frame, language, onLanguageChange, onContin
       </section>
       <div className="qs-actions qs-actions--cover">
         <button type="button" className="qc-btn qc-btn--gold qc-btn--block" onClick={onContinue}>How it works<Icon name="arrow" /></button>
+        <LegalLinks />
         <AppVersion inverse />
       </div>
       {frame.notice && <Toast message={frame.notice} onDone={frame.onNoticeDone} />}
