@@ -67,7 +67,7 @@ it("calls onLanguageChange when a language is picked from the menu", async () =>
 
 it("hides the Cookie settings link while the consent banner is open", () => {
   renderWelcome();
-  expect(screen.queryByRole("button", { name: "Cookie settings" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Cookies" })).not.toBeInTheDocument();
 });
 
 it("offers a Cookie settings link under the photo privacy notice once consent is answered", () => {
@@ -77,7 +77,7 @@ it("offers a Cookie settings link under the photo privacy notice once consent is
   );
   const { container } = renderWelcome();
   const note = container.querySelector(".qs-note");
-  const link = screen.getByRole("button", { name: "Cookie settings" });
+  const link = screen.getByRole("button", { name: "Cookies" });
   expect(note).not.toBeNull();
   expect(note!.contains(link)).toBe(false);        // a sibling below the notice, not inside it
   expect(note!.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -96,6 +96,6 @@ it("re-opens the consent banner from the Cookie settings link", async () => {
     </>,
   );
   expect(screen.queryByRole("dialog", { name: "About cookies" })).not.toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", { name: "Cookie settings" }));
+  await userEvent.click(screen.getByRole("button", { name: "Cookies" }));
   expect(screen.getByRole("dialog", { name: "About cookies" })).toBeInTheDocument();
 });

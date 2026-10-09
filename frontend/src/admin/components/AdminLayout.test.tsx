@@ -33,9 +33,9 @@ describe("AdminLayout", () => {
     expect(screen.getByRole("contentinfo")).toHaveTextContent(versionLabel(APP_VERSION));
   });
 
-  it("offers a Cookie settings link at the foot of the sidebar, above the version footer", () => {
+  it("offers a Cookies link at the foot of the sidebar, above the version footer", () => {
     render(<AdminLayout active="dashboard">Content</AdminLayout>);
-    const link = screen.getByRole("button", { name: "Cookie settings" });
+    const link = screen.getByRole("button", { name: "Cookies" });
     expect(screen.getByRole("navigation", { name: "Admin navigation" }).contains(link)).toBe(true);
     const version = screen.getByRole("contentinfo");
     expect(version.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
@@ -43,9 +43,9 @@ describe("AdminLayout", () => {
 
   it("offers the legal and contact pages at the foot of the sidebar", () => {
     render(<AdminLayout active="dashboard">Content</AdminLayout>);
-    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
-    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
-    expect(screen.getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/contact");
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy?from=admin");
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms?from=admin");
+    expect(screen.getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/contact?from=admin");
   });
 
   it("re-opens the consent banner from the Cookie settings link", async () => {
@@ -61,7 +61,7 @@ describe("AdminLayout", () => {
       </>,
     );
     expect(screen.queryByRole("dialog", { name: "About cookies" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Cookie settings" }));
+    await user.click(screen.getByRole("button", { name: "Cookies" }));
     expect(screen.getByRole("dialog", { name: "About cookies" })).toBeInTheDocument();
   });
 

@@ -21,7 +21,7 @@ export function ConsentBanner({ app }: { app: "player" | "admin" }) {
         <h2 className="qc-consent__title" id={titleId}>About cookies</h2>
         <p className="t-body">
         {TEXTS[app]}{" "}
-        <a href="/privacy">Privacy policy</a>
+        <a href={app === "admin" ? "/privacy?from=admin" : "/privacy"}>Privacy policy</a>
       </p>
         <div className="qc-consent__actions">
           <button type="button" className="qc-btn qc-btn--secondary qc-btn--block" onClick={accept}>Accept</button>

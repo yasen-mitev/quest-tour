@@ -68,7 +68,7 @@ export function WelcomeScreen({ state, frame, language, onLanguageChange, onStar
               shown only once the banner has been answered (an open banner makes it a no-op) */}
           {consent && (
             <div className="qs-cookie-settings">
-              <button type="button" className="qc-btn qc-btn--quiet" onClick={reopen}>Cookie settings</button>
+              <button type="button" className="qc-btn qc-btn--quiet" onClick={reopen}>Cookies</button>
             </div>
           )}
         </main>

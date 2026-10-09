@@ -143,5 +143,10 @@
    pages themselves, and in the admin nav; the pages are plain text cards. */
 .qs-legal { display: flex; justify-content: center; gap: var(--space-4); margin-top: var(--space-2); }
 .qs-legal a { font: 700 15px/20px var(--font-sans); color: var(--patina-600); text-decoration: underline; text-underline-offset: 3px; }
+.qs-legal__back { justify-self: end; }  /* bottom right of the card */
 .qs-legal__section { display: grid; gap: var(--space-2); }
 .qs-legal__buttons { display: grid; gap: var(--space-2); }
+.qs-legal__settings {
+  font: 700 15px/20px var(--font-sans); color: var(--patina-600); background: none; border: 0; padding: 0;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}
