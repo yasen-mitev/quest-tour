@@ -53,9 +53,9 @@ describe("AdminLayout", () => {
         <AdminLayout active="dashboard">Content</AdminLayout>
       </>,
     );
-    expect(screen.queryByRole("region", { name: "Cookie notice" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "About cookies" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Cookie settings" }));
-    expect(screen.getByRole("region", { name: "Cookie notice" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "About cookies" })).toBeInTheDocument();
   });
 
   it("calls logout and redirects to login when Logout is clicked", async () => {

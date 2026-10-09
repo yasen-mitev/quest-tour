@@ -95,7 +95,7 @@ it("re-opens the consent banner from the Cookie settings link", async () => {
       <WelcomeScreen state={base} frame={frame} language="en" onLanguageChange={() => {}} onStart={() => {}} />
     </>,
   );
-  expect(screen.queryByRole("region", { name: "Cookie notice" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("dialog", { name: "About cookies" })).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "Cookie settings" }));
-  expect(screen.getByRole("region", { name: "Cookie notice" })).toBeInTheDocument();
+  expect(screen.getByRole("dialog", { name: "About cookies" })).toBeInTheDocument();
 });

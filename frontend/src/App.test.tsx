@@ -47,16 +47,16 @@ describe("App", () => {
     "shows the cookie consent banner on %s until an answer is stored",
     (path) => {
       render(<App path={path} />);
-      expect(screen.getByRole("region", { name: "Cookie notice" })).toBeInTheDocument();
+      expect(screen.getByRole("dialog", { name: "About cookies" })).toBeInTheDocument();
     },
   );
 
   it("dismisses the cookie consent banner once an answer is stored", async () => {
     const user = userEvent.setup();
     render(<App path="/" />);
-    expect(screen.getByRole("region", { name: "Cookie notice" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "About cookies" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Decline" }));
-    expect(screen.queryByRole("region", { name: "Cookie notice" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "About cookies" })).not.toBeInTheDocument();
   });
 
   it("still allows copy/selection inside the answer input", () => {
