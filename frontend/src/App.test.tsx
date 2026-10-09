@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
 
@@ -40,6 +41,22 @@ describe("App", () => {
     for (const type of ["copy", "cut", "contextmenu", "selectstart"]) {
       expect(prevent(type), type).toBe(true);
     }
+  });
+
+  it.each(["/", "/admin", "/play/some-token", "/album/preview", "/no/such/page"])(
+    "shows the cookie consent banner on %s until an answer is stored",
+    (path) => {
+      render(<App path={path} />);
+      expect(screen.getByRole("region", { name: "Cookie notice" })).toBeInTheDocument();
+    },
+  );
+
+  it("dismisses the cookie consent banner once an answer is stored", async () => {
+    const user = userEvent.setup();
+    render(<App path="/" />);
+    expect(screen.getByRole("region", { name: "Cookie notice" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Decline" }));
+    expect(screen.queryByRole("region", { name: "Cookie notice" })).not.toBeInTheDocument();
   });
 
   it("still allows copy/selection inside the answer input", () => {

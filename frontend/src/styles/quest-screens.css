@@ -67,6 +67,7 @@
 
 .qs-note { display: grid; grid-template-columns: 32px 1fr; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: var(--surface-raised); box-shadow: var(--shadow-raised); align-items: start; }
 .qs-note svg { width: 32px; height: 32px; padding: 7px; border-radius: 50%; background: var(--patina-50); color: var(--patina-800); }
+.qs-cookie-settings { display: flex; justify-content: center; }   /* "Cookie settings" re-opens the consent banner */
 
 /* Welcome hero */
 .qs-hero { position: relative; background: var(--accent-strong); color: var(--on-accent); padding: var(--space-6) var(--space-4) var(--space-5); display: grid; gap: var(--space-3); overflow: hidden; border-bottom: 2px solid var(--gold-500); }

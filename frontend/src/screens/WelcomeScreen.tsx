@@ -9,6 +9,7 @@ import type { FrameProps } from "../components/GameFrame";
 import { Icon, type IconName } from "../components/Icon";
 import { Paragraphs } from "../components/Paragraphs";
 import { Toast } from "../components/Toast";
+import { useConsent } from "../lib/consent";
 import { formatHours, formatPenalty } from "../lib/format";
 
 export function WelcomeScreen({ state, frame, language, onLanguageChange, onStart }: {
@@ -18,6 +19,7 @@ export function WelcomeScreen({ state, frame, language, onLanguageChange, onStar
   const { game } = state;
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const { consent, reopen } = useConsent();
   const limit = formatHours(game.max_duration_minutes);
 
   async function start() {
@@ -62,6 +64,13 @@ export function WelcomeScreen({ state, frame, language, onLanguageChange, onStar
             <Icon name="shield" />
             <p className="t-body"><strong>About your photos.</strong> Photos you upload are collected and kept by your host. You won't see them in the app.</p>
           </div>
+          {/* The cookie notice is the other privacy statement — keep the re-open entry next to it,
+              shown only once the banner has been answered (an open banner makes it a no-op) */}
+          {consent && (
+            <div className="qs-cookie-settings">
+              <button type="button" className="qc-btn qc-btn--quiet" onClick={reopen}>Cookie settings</button>
+            </div>
+          )}
         </main>
       </div>
       <div className="qs-actions-slot" inert={confirming}>

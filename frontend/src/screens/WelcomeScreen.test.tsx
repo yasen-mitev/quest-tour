@@ -1,11 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 import type { GameState } from "../api/types";
+import { ConsentBanner } from "../components/ConsentBanner";
 import { makeState } from "../test/fixtures";
 import { WelcomeScreen } from "./WelcomeScreen";
 
 const frame = { header: null, offline: false, notice: null, onNoticeDone: () => {} };
+
+beforeEach(() => localStorage.clear());
 
 function renderWelcome(overrides: Partial<Omit<Parameters<typeof makeState>[0], "game">> & { game?: Partial<GameState["game"]> } & { onStart?: () => void; onLanguageChange?: (lang: string) => void } = {}) {
   const { onStart = vi.fn(), onLanguageChange = vi.fn(), game: gameOverride, ...stateOverrides } = overrides;
@@ -60,4 +63,39 @@ it("calls onLanguageChange when a language is picked from the menu", async () =>
   await userEvent.click(screen.getByRole("button", { name: "Language, EN" }));
   await userEvent.click(screen.getByRole("option", { name: "Srpski" }));
   expect(onLanguageChange).toHaveBeenCalledWith("sr");
+});
+
+it("hides the Cookie settings link while the consent banner is open", () => {
+  renderWelcome();
+  expect(screen.queryByRole("button", { name: "Cookie settings" })).not.toBeInTheDocument();
+});
+
+it("offers a Cookie settings link under the photo privacy notice once consent is answered", () => {
+  localStorage.setItem(
+    "questtour-consent",
+    JSON.stringify({ choice: "accepted", at: "2026-10-09T10:00:00.000Z" }),
+  );
+  const { container } = renderWelcome();
+  const note = container.querySelector(".qs-note");
+  const link = screen.getByRole("button", { name: "Cookie settings" });
+  expect(note).not.toBeNull();
+  expect(note!.contains(link)).toBe(false);        // a sibling below the notice, not inside it
+  expect(note!.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
+it("re-opens the consent banner from the Cookie settings link", async () => {
+  localStorage.setItem(
+    "questtour-consent",
+    JSON.stringify({ choice: "accepted", at: "2026-10-09T10:00:00.000Z" }),
+  );
+  const base = makeState({ phase: null, status: "not_started", clock: null, task: null });
+  render(
+    <>
+      <ConsentBanner />
+      <WelcomeScreen state={base} frame={frame} language="en" onLanguageChange={() => {}} onStart={() => {}} />
+    </>,
+  );
+  expect(screen.queryByRole("region", { name: "Cookie notice" })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Cookie settings" }));
+  expect(screen.getByRole("region", { name: "Cookie notice" })).toBeInTheDocument();
 });
