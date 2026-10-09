@@ -49,7 +49,7 @@ describe("AdminLayout", () => {
     );
     render(
       <>
-        <ConsentBanner />
+        <ConsentBanner app="admin" />
         <AdminLayout active="dashboard">Content</AdminLayout>
       </>,
     );

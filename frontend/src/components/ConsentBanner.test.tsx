@@ -7,22 +7,30 @@ describe("ConsentBanner", () => {
   beforeEach(() => localStorage.clear());
 
   it("is shown while no consent record exists", () => {
-    render(<ConsentBanner />);
+    render(<ConsentBanner app="player" />);
     expect(screen.getByRole("region", { name: "Cookie notice" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Accept" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Decline" })).toBeInTheDocument();
   });
 
-  it("names what is stored: team link, language choice and the admin sign-in session", () => {
-    render(<ConsentBanner />);
-    expect(screen.getByRole("region", { name: "Cookie notice" })).toHaveTextContent(/team link/i);
-    expect(screen.getByRole("region", { name: "Cookie notice" })).toHaveTextContent(/language/i);
-    expect(screen.getByRole("region", { name: "Cookie notice" })).toHaveTextContent(/sign-in session/i);
+  it("names what the player app stores: team link and language choice", () => {
+    render(<ConsentBanner app="player" />);
+    const banner = screen.getByRole("region", { name: "Cookie notice" });
+    expect(banner).toHaveTextContent(/team link/i);
+    expect(banner).toHaveTextContent(/language/i);
+    expect(banner).not.toHaveTextContent(/sign-in session/i);
+  });
+
+  it("names what the admin panel stores: the admin sign-in session", () => {
+    render(<ConsentBanner app="admin" />);
+    const banner = screen.getByRole("region", { name: "Cookie notice" });
+    expect(banner).toHaveTextContent(/sign-in session/i);
+    expect(banner).not.toHaveTextContent(/team link/i);
   });
 
   it("writes an accepted record and dismisses on Accept", async () => {
     const user = userEvent.setup();
-    render(<ConsentBanner />);
+    render(<ConsentBanner app="player" />);
     await user.click(screen.getByRole("button", { name: "Accept" }));
     expect(screen.queryByRole("region", { name: "Cookie notice" })).not.toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem("questtour-consent") ?? "")).toEqual({
@@ -33,7 +41,7 @@ describe("ConsentBanner", () => {
 
   it("writes a declined record and dismisses on Decline", async () => {
     const user = userEvent.setup();
-    render(<ConsentBanner />);
+    render(<ConsentBanner app="player" />);
     await user.click(screen.getByRole("button", { name: "Decline" }));
     expect(screen.queryByRole("region", { name: "Cookie notice" })).not.toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem("questtour-consent") ?? "").choice).toBe("declined");
@@ -44,7 +52,7 @@ describe("ConsentBanner", () => {
       "questtour-consent",
       JSON.stringify({ choice: "accepted", at: "2026-10-09T10:00:00.000Z" }),
     );
-    render(<ConsentBanner />);
+    render(<ConsentBanner app="player" />);
     expect(screen.queryByRole("region", { name: "Cookie notice" })).not.toBeInTheDocument();
   });
 });

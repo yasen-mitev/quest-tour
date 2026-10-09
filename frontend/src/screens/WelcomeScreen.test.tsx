@@ -91,7 +91,7 @@ it("re-opens the consent banner from the Cookie settings link", async () => {
   const base = makeState({ phase: null, status: "not_started", clock: null, task: null });
   render(
     <>
-      <ConsentBanner />
+      <ConsentBanner app="player" />
       <WelcomeScreen state={base} frame={frame} language="en" onLanguageChange={() => {}} onStart={() => {}} />
     </>,
   );

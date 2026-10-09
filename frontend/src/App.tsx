@@ -25,7 +25,7 @@ export function App({ path = window.location.pathname }: { path?: string }) {
   if (path.startsWith("/admin")) {
     return (
       <>
-        <ConsentBanner />
+        <ConsentBanner app="admin" />
         <Suspense fallback={<LoadingScreen offline={false} />}>
           <AdminApp path={path} />
         </Suspense>
@@ -52,7 +52,7 @@ export function App({ path = window.location.pathname }: { path?: string }) {
 function withConsent(screen: ReactNode): ReactNode {
   return (
     <>
-      <ConsentBanner />
+      <ConsentBanner app="player" />
       {screen}
     </>
   );
