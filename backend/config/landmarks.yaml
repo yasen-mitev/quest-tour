@@ -2,7 +2,7 @@
 landmarks:
   - id: lily-pond
     name: Lily Pond
-    name_i18n: { de: Seerosenteich, sr: Jezero s lokvanjima }
+    name_i18n: { de: Seerosenteich, sr: Jezero s lokvanjima, bg: Езеро с лилии }
     # Compass temporarily disabled (issue #35) — uncomment to restore.
     # coordinates: { lat: 42.68521840568546, lon: 23.3425011626189 }
     task: >-
@@ -25,9 +25,17 @@ landmarks:
         Davno je ovo mesto bila močvara. Kasnije su ga ljudi zvali jezero sa ribama. Danas
         na njegovoj površini plutaju beli cvetovi, a po sredini se bez brige kupaju tri
         dečaka. Oko njih stoje čuvari koji u bajkama čekaju poljubac da bi postali
-        prinčevi. Ali ovde ih niko nije poljubio, pa ostaju na svojim mestima. Nađi jezero,
+        prinčevi. Ali ovde ih niko nije poljubao, pa ostaju na svojim mestima. Nađi jezero,
         dobro pogledaj figure u sredini i prebroj one koji čuvaju dečake. Taj broj je ključ
         tvog sledećeg koraka.
+      bg: >-
+        Преди много време това място е било блато. По-късно хората го наричали Рибното
+        езеро. Днес по повърхността му плуват бели цветя, а в средата безгрижно се
+        плискат три малки момчета. Около тях стоят стражи, които в приказките чакат
+        целувка, за да се превърнат в принцове. Тук обаче никой не ги е целувал, затова
+        си остават на постовете си. Намери езерото, разгледай внимателно фигурите в
+        центъра и преброй тези, които пазят децата. Това число е ключът към следващата
+        ти стъпка.
     accepted_answers: ["10", ten]
     hint1: >-
       Don't look for the big lake with the boats. Yours is smaller and older, and it takes
@@ -39,6 +47,9 @@ landmarks:
       sr: >-
         Ne traži veliko jezero sa čamcima. Tvoje je manje i starije, a ime je dobilo po
         cveću koje raste u njegovoj vodi.
+      bg: >-
+        Не търси голямото езеро с лодките. Твоето е по-малко и по-старо и носи името на
+        цветята, които растат във водата му.
     hint2: >-
       If you spot a little honey-loving bear facing the water, you're in the right place.
       Look where he's looking.
@@ -49,6 +60,9 @@ landmarks:
       sr: >-
         Ako ugledaš malog medveda koji voli med a gleda u vodu, na pravom si mestu. Pogledaj
         tamo gde i on gleda.
+      bg: >-
+        Ако забележиш малко мече, което обича мед и гледа към водата, значи си на
+        правилното място. Погледни натам, накъдето гледа то.
     tourist_info: |
       The pond was laid out by Daniel Neff, the Swiss gardener who first designed Borisova
       Garden, on the site of a former marsh. He stocked it with goldfish and planted water
@@ -101,9 +115,26 @@ landmarks:
         mesto, a neki lokvanji u Južnom parku presađeni su upravo sa ovog jezera. Zanimljiv
         detalj: obližnja česma za piće nekada je bila okrunjena medvedom, a devet pingvina
         okruživalo je njene vodomete.
+      bg: |
+        Езерото е създадено от Даниел Неф, швейцарският градинар, който пръв проектира
+        Борисовата градина, на мястото на някогашно блато. Той го напълнил със златни
+        рибки и засадил водни лилии. Заради златните рибки дълги години е било известно
+        като Рибното езеро. Още около 1900 г. езерото се появява на едни от най-първите
+        софийски пощенски картички. Тогава то е било украсено с декоративна ваза с
+        водна струя и с фигури на жаби и костенурки.
+
+        С годините видът на езерото се е променял многократно. През 1935 г. в центъра му
+        е поставена голяма каменна лилия с 36 водни струи. По-късно, по проект на
+        скулптора Васил Зидаров, тя е заменена с три къпещи се деца. Момчетата имат
+        бурна история. До 2011 г. те изчезват и от украсата остават само няколко жаби.
+        След като бронзовите копия, възстановени с фирмени дарения, са откраднати
+        отново, общината изработва фигурите от боядисана пластмаса. Днес къпещите се
+        момчета са отново на мястото си, а някои от лилиите в Южния парк са пресадени
+        именно от това езеро. Любопитен детайл: близката чешма някога е била увенчана с
+        мечка, а девет пингвина са обграждали струите ѝ.
   - id: eagles-bridge
     name: Eagles' Bridge
-    name_i18n: { de: Adlerbrücke, sr: Orlov most }
+    name_i18n: { de: Adlerbrücke, sr: Orlov most, bg: Орлов мост }
     task: >-
       More than a century ago, travellers arriving from Constantinople knew that once they
       crossed this small river, they had reached the capital. This is where the city welcomed
@@ -126,6 +157,13 @@ landmarks:
         zatočeništva. Danas ova kapija nema krila, ali njegovi čuvari imaju. Nađi kapiju i
         potraži na njenim gelenderima godinu kada je prvi put otvorena. Ta godina je ključ
         tvog sledećeg koraka.
+      bg: >-
+        Преди повече от век пътниците, които пристигали от Константинопол, знаели, че щом
+        прекосят тази малка река, са стигнали до столицата. Тук градът посрещал своите
+        гости. Една пролет през март тук той посрещнал и онези, които се завръщали от
+        далечно изгнание. Днес тази порта няма крила, но стражите ѝ имат. Намери портата
+        и потърси по перилата ѝ годината, в която е открита за пръв път. Тази година е
+        ключът към следващата ти стъпка.
     accepted_answers: ["1891"]
     hint1: >-
       The road the guests travelled on still bears the name of the city they came from.
@@ -137,6 +175,9 @@ landmarks:
       sr: >-
         Put kojim su dolazili gosti i danas nosi ime grada iz koga su dolazili. Prati ga ka
         centru.
+      bg: >-
+        Пътят, по който са пътували гостите, и днес носи името на града, от който са
+        дошли. Следвай го към центъра.
     hint2: >-
       The gate is named after the birds that guard it from above. Stand between them, look
       down towards the river and read what is written in the metal.
@@ -147,6 +188,9 @@ landmarks:
       sr: >-
         Kapija je dobila ime po pticama koje je čuvaju s visine. Stani između njih, pogledaj
         naniže ka reki i pročitaj šta piše u metalu.
+      bg: >-
+        Портата носи името на птиците, които я пазят отгоре. Застани между тях, погледни
+        надолу към реката и прочети какво е изписано в метала.
     tourist_info: |
       Eagles' Bridge (Orlov Most) was built in 1890–1891 over the Perlovska River and was one
       of the first solid masonry bridges erected in Sofia after the Liberation. For travellers
@@ -205,9 +249,29 @@ landmarks:
         granita visokim oko 7 metara. Po tumačenjima, njihov broj simbolizuje četiri strane
         sveta. Godina završetka uklesana je na bogato ukrašenim gelenderima sa obe strane
         mosta. Godine 1970. most je proširen, a njegov severni gelender je pomeran.
+      bg: |
+        Орлов мост е построен през 1890–1891 г. над Перловска река и е бил един от
+        първите солидни каменни мостове, издигнати в София след Освобождението. За
+        пътниците, които влизали в града от изток по Цариградско шосе, той е бил
+        първото кръстовище към самия център — затова го наричат портата на града.
+        Мястото не е случайно. През март 1878 г. точно тук са посрещнати българските
+        затворници и изгнаници, освободени от Диарбекир. Заради това мостът е замислен
+        като символ на свободата. Днес събитието е отбелязано със скромна каменна
+        плоча, поставена от общината през 90-те години на миналия век.
+
+        Мостът е проектиран от главния архитект на София Адолф Вацлав Коларж заедно с
+        чешкия инженер Вацлав Прошек, а строителството е поверено на неговите
+        братовчеди Иржи и Богдан Прошек. Същите строители издигат и Лъвовия мост, а
+        Орлов мост е завършен две години след него. Орлите и металните части са
+        изработени във Виена от фирмата „Рудолф Филип Вагнер & Биро“. Четирите
+        бронзови орли с разперени крила седят върху колони от обработен гранит с
+        височина около 7 метра. Според тълкуванията броят им символизира четирите
+        посоки на света. Годината на завършване е гравирана върху богато украсените
+        перила от двете страни на моста. През 1970 г. мостът е разширен, а северното
+        му перило е преместено.
   - id: sofia-university
     name: Sofia University (Rectorate)
-    name_i18n: { de: Sofia-Universität (Rektorat), sr: Sofijski univerzitet (Rektorat) }
+    name_i18n: { de: Sofia-Universität (Rektorat), sr: Sofijski univerzitet (Rektorat), bg: Софийски университет (Ректорат) }
     task: >-
       Two brothers from Karlovo turned a modest trade in a foreign land into a banking
       empire, and to this day they remain an example of successful entrepreneurship. Yet
@@ -234,6 +298,14 @@ landmarks:
         koji svake godine dočekuje hiljade novih „dece". Sada braća sede sa obe strane
         stepenica i posmatraju ko ulazi. Stani između njih i prebroj koliko vrata vode ka
         znanju.
+      bg: >-
+        Двама братя от Карлово превърнали скромна търговия в чужда земя в банкова
+        империя и до днес остават пример за успешно предприемачество. Но тяхната щедрост
+        се оказала по-ценна от богатството им. Те подкрепяли църкви, училища и болници и
+        накрая оставили почти цялото си състояние на родината си. Деца нямали, но
+        оставили на България наследник, който всяка година посреща хиляди нови „деца“.
+        Сега братята седят от двете страни на стълбите и наблюдават кой влиза. Застани
+        между тях и преброй колко врати водят към знанието.
     accepted_answers: ["3", three]
     hint1: >-
       The brothers' heir is the oldest institution of higher education in the country.
@@ -245,6 +317,9 @@ landmarks:
       sr: >-
         Naslednik braće je najstarija visokoškolska ustanova u zemlji. Ispod nje se nalazi
         metro stanica koja nosi njeno ime.
+      bg: >-
+        Наследникът на братята е най-старото висше училище в страната. Под него се намира
+        метростанция, която носи неговото име.
     hint2: >-
       The brothers are cast in bronze and sit on either side of the grand staircase. Count
       only the doors it leads to.
@@ -255,6 +330,9 @@ landmarks:
       sr: >-
         Braća su livljeni u bronzi i sede sa obe strane velikog stepeništa. Prebroj samo
         vrata do kojih ono vodi.
+      bg: >-
+        Братята са отлети от бронз и седят от двете страни на голямото стълбище. Преброй
+        само вратите, до които то води.
     tourist_info: |
       Evlogi and Hristo Georgiev were born in Karlovo. As young men they joined their
       maternal uncles, the Puliev family, who were merchants in Romania. There the brothers
@@ -321,9 +399,31 @@ landmarks:
         zgrada je svečano osvećena 16. decembra 1934. Evlogi je tražio da se u dvorištu škole
         podignu dve mermorne statue u spomen braći. Danas stoje pred vratima univerziteta, ali
         su liveni u bronzi. Dve sede figure delo su vajara Kirila Šivarova.
+      bg: |
+        Евлоги и Христо Георгиеви са родени в Карлово. Като младежи се присъединили към
+        братята на майка си — семейство Пулиеви, които били търговци в Румъния. Там
+        братята изградили голяма търговско-банкова дейност, а в същото време подкрепяли
+        много институции и плащали образованието на множество млади хора. През 1896 г.
+        Евлоги дарява 800 000 златни лева и парцел в центъра на София за построяването на
+        бъдещия университет. Година по-късно той умира. В завещанието си оставя 6 милиона
+        лева за висше училище в България и признава приноса на брат си Христо, починал
+        още през 1872 г. едва на 48 години. Роднините му очаквали голямо наследство, но
+        Евлоги им оставил само няколко хиляди лева, а почти всичко останало дарил на
+        църкви, училища, болници и университети. Двамата братя са погребани в
+        Букурещкото гробище Белу, а гробницата им е обявена от румънската държава за
+        архитектурен паметник.
+
+        Пътят до сградата не е бил лесен. През 1906 г. международен конкурс печели
+        френският архитект Анри Бреасон, но строителството така и не започва. По-късно
+        настоятелството, което управлява дарението, възлага на архитекта Йордан Миланов
+        да преработи проекта, въпреки възраженията на университета и на самия Бреасон.
+        Основният камък е положен на 30 юни 1924 г., а сградата е тържествено осветена на
+        16 декември 1934 г. Евлоги е пожелал в двора на училището да бъдат издигнати две
+        мраморни статуи в памет на братята. Днес те стоят пред вратите на университета,
+        но са отлети от бронз. Двете седящи фигури са дело на скулптора Кирил Шиваров.
   - id: alexander-nevsky
     name: Alexander Nevsky Cathedral
-    name_i18n: { de: Alexander-Newski-Kathedrale, sr: Katedrala Sv. Aleksandra Nevskog }
+    name_i18n: { de: Alexander-Newski-Kathedrale, sr: Katedrala Sv. Aleksandra Nevskog, bg: Катедрала „Свети Александър Невски“ }
     task: >-
       This church is a gesture of gratitude to the thousands of soldiers who came from afar
       to bring freedom. It bears the name of a warrior prince from the north who became the
@@ -352,6 +452,14 @@ landmarks:
         nikad ne trepne. On je simbol ove zemlje i skoro jedan vek čuva vatru pored sebe.
         Saznaj sa koje strane je ikona kneza i ko je izdaleka gleda. Stražar je ključ tvog
         sledećeg koraka.
+      bg: >-
+        Тази църква е жест на благодарност към хилядите войници, дошли отдалеч, за да
+        донесат свобода. Тя носи името на воин-княз от севера, станал покровител на
+        тяхната армия. Князът наблюдава църквата отвисоко на фасадата, точно над три
+        прозореца. Но и него някой наблюдава. Наблизо, пред гробницата на войник, чието
+        име никой не знае, лежи страж, който никога не мига. Той е символ на тази земя и
+        от почти век пази огъня до себе си. Разбери от коя страна е иконата на княза и кой
+        я гледа отдалеч. Стражът е ключът към следващата ти стъпка.
     accepted_answers: [lion, the lion]
     hint1: >-
       The prince's icon is on the side where the bell tower rises, facing the direction where
@@ -362,6 +470,9 @@ landmarks:
         Richtung des Sonnenuntergangs.
       sr: >-
         Ikona kneza je na strani gde se uzdiže zvonik, okrenuta ka strani gde sunce zalazi.
+      bg: >-
+        Иконата на княза е от страната, където се издига камбанарията, обърната към
+        посоката, в която залязва слънцето.
     hint2: >-
       Stand with your back to the icon and walk towards the oldest church, the one that gave
       the city its name. Beside its eternal flame you will find the guard.
@@ -372,6 +483,9 @@ landmarks:
       sr: >-
         Stani leđima okrenut ikoni i pođi ka najstarijoj crkvi, onoj koja je dala ime gradu.
         Pored njenog večnog ognja naći ćeš stražara.
+      bg: >-
+        Застани с гръб към иконата и се запъти към най-старата църква, онази, която е
+        дала името на града. До вечния ѝ огън ще намериш стража.
     tourist_info: |
       The St. Alexander Nevsky Cathedral was built in gratitude to the Russian liberators and
       bears the name of St. Alexander Nevsky, patron of the Russian army in the Russo-Turkish
@@ -424,10 +538,28 @@ landmarks:
         zajedno sa zemljom sa Šipke i Stare Zagore, gde su u oslobođenačkom ratu bili najteži
         gubici. Danas je bronzani lav visok četiri metra uglačan do glatkoće od dece koja se
         penju po njemu.
+      bg: |
+        Катедралата „Свети Александър Невски“ е построена в знак на благодарност към
+        руските освободители и носи името на свети Александър Невски, покровител на
+        руската армия в Руско-турската война. Основният камък е положен през 1882 г., а
+        строителството по проект на архитекта Александър Померанцев продължава от 1904 до
+        1912 г. Мозайката с иконата на светеца е на западната фасада, над тройния
+        прозорец, на 30 метра над земята.
+
+        Лъвът, който гледа към нея, е част от Паметника на незнайния войник до църквата
+        „Света София“. Той е дело на скулптора Андрей Николов, работил върху него пет
+        години, от 1926 до 1931 г. Първият паметник обаче е отхвърлен, защото е бил
+        претоварен със 17 скулптурни фигури. Най-накрая е открит през 1941 г., а по време
+        на бомбардировките през 1944 г. едва не е унищожен. Дълги години лъвът е местен от
+        място на място и накрая е открит в двора на вила край Врана. Върнат е на
+        първоначалното си място, когато през 1981 г. е открит новият паметник. До него
+        гори вечен огън, заедно със земя от Шипка и Стара Загора, където са най-тежките
+        загуби на Освободителната война. Днес четириметровият бронзов лъв е лъснат до
+        гладкост от децата, които се катерят по него.
     tourist_info_picture: images/landmark-nevsky.svg
   - id: ivan-vazov-theatre
     name: Ivan Vazov National Theatre
-    name_i18n: { de: Nationales Theater Ivan Vazov, sr: Narodno pozorište Ivan Vazov }
+    name_i18n: { de: Nationales Theater Ivan Vazov, sr: Narodno pozorište Ivan Vazov, bg: Народен театър „Иван Вазов“ }
     # Compass temporarily disabled (issue #35) — uncomment to restore.
     # coordinates: { lat: 42.694466839258304, lon: 23.326135921777293 }
     task: >-
@@ -459,6 +591,15 @@ landmarks:
         vrata. Tamo sede žene u belom i zlatnom, a neke u rukama drže tuđa lica — neka se
         smeju, neka plaču. Prebroj samo lica koja žene iznad vrata drže u rukama. Lica koja
         se smiju s vrha portika nisu deo ove igre. Njihov broj je ključ tvog sledećeg koraka.
+      bg: >-
+        В тази сграда хората плачат и се смеят, въпреки че в живота им не се е случило
+        нищо тъжно или смешно. Веднъж тя изгаря почти до основи, но лицето ѝ оцелява,
+        сякаш отказва да напусне сцената. Шест колони поддържат покрива ѝ, а високо горе
+        богът на изкуствата е заобиколен от своите музи. Не гледай него. Стъпи под
+        портика и вдигни очи над вратите. Там седят жени в бяло и златно, а някои от тях
+        държат в ръцете си чужди лица — едни смеещи се, други плачещи. Преброй само
+        лицата в ръцете на жените над вратите. Лицата, които надничат от върха на
+        портика, не са част от тази игра. Техният брой е ключът към следващата ти стъпка.
     accepted_answers: ["4", four]
     hint1: >-
       The building bears the name of the patriarch of Bulgarian literature, and the City
@@ -470,6 +611,9 @@ landmarks:
       sr: >-
         Zgrada nosi ime patrijarha bugarske književnosti, a pred njom se prostire Gradski
         park.
+      bg: >-
+        Сградата носи името на патриарха на българската литература, а пред нея се
+        простира Градската градина.
     hint2: >-
       Not all of the women above the doors hold faces. Some hold lyres, so skip those. Count
       only the masks of comedy and tragedy that the women hold in their hands.
@@ -481,6 +625,9 @@ landmarks:
       sr: >-
         Ne sve žene iznad vrata drže lica. Neke drže liru, pa njih preskoči. Prebroj samo
         maske komedije i tragedije koje žene drže u rukama.
+      bg: >-
+        Не всички жени над вратите държат лица. Някои държат лира, така че ги пропусни.
+        Преброй само маските на комедията и трагедията, които жените държат в ръцете си.
     tourist_info: |
       The building was designed by the Viennese architects Ferdinand Fellner and Hermann
       Helmer, known as "the opera architects" because they built more than 50 theatres across
@@ -541,9 +688,30 @@ landmarks:
         pokretni pod, revolucionarnu tehnologiju za ono vreme. Zgrada je ponovo oštećena
         bombardovanjem u Drugom svetskom ratu, a 1974–1976. obnovljen je njen prvobitni
         izgled.
+      bg: |
+        Сградата е проектирана от виенските архитекти Фердинанд Фелнер и Херман Хелмер,
+        известни като „архитектите на оперите“, защото са построили повече от 50 театъра
+        из цяла Европа. Тя стои на мястото на дървения театър „Основа“, а Народното
+        събрание приема специален закон за събиране на средства за строителството ѝ.
+        Театърът е открит на 3 януари 1907 г. с пиесата на Иван Вазов „Изгубените“.
+        Откриването е бурно: студенти освиркват княз Фердинанд при пристигането му, а той
+        в отговор затваря Софийския университет за шест месеца. Над входа шест колони
+        поддържат триъгълен фронтон с Аполон, покровителя на изкуствата, заобиколен от
+        музите.
+
+        В рамките на само няколко дни през 1923 г. сградата преминава през две изпитания.
+        На 4 февруари по време на представление е хвърлена бомба срещу
+        министър-председателя Александър Стамболийски, но никой не загива и
+        представлението продължава. Седмица по-късно, на 10 февруари, по време на
+        юбилейно представление с газово осветление лампа подпалва дървените части на
+        сцената. Пламъкът унищожава почти цялата сграда и оцелява само фасадата. Театърът
+        е възстановен от немския архитект Мартин Дюлфер и българския инженер Кирил
+        Чапаров, а новата сцена има подвижен под — революционна технология за времето си.
+        Сградата е повредена отново при бомбардировките през Втората световна война, а
+        през 1974–1976 г. е възстановен първоначалният ѝ вид.
   - id: ancient-serdika
     name: Ancient Serdika Complex
-    name_i18n: { de: Antikes Serdika, sr: Antička Serdika }
+    name_i18n: { de: Antikes Serdika, sr: Antička Serdika, bg: Античен комплекс „Сердика“ }
     task: >-
       Above your heads flows today's Sofia: cars, trams, people in a hurry. But a few metres
       beneath their feet lies another city, whose streets were once walked by Roman soldiers
@@ -569,6 +737,14 @@ landmarks:
         kompasa. Rimljani su je zvali rečju koja znači „osovina" ili „šarka", jer se ceo grad
         okretao oko nje. Siđi u antički grad, nađi mesto blizu staklene kupole i potraži tablu
         koja čuva sećanje na tu ulicu. Njeno ime je ključ tvog sledećeg koraka.
+      bg: >-
+        Над главите ви тече днешната София: коли, трамваи, забързани хора. Но само на
+        няколко метра под краката им лежи друг град, по чиито улици някога са вървели
+        римски войници и търговци. Една от тези улици е вървяла право от север на юг, като
+        иглата на компас. Римляните я наричали с дума, означаваща „ос“ или „панта“,
+        защото целият град се въртял около нея. Слез в античния град, намери мястото до
+        стъкления купол и потърси табелата, която пази спомена за тази улица. Името ѝ е
+        ключът към следващата ти стъпка.
     accepted_answers: [Cardo, Cardo Maximus]
     hint1: >-
       Don't look for the sign directly under the glass dome. It stands a little behind it,
@@ -580,6 +756,9 @@ landmarks:
       sr: >-
         Ne traži tablu tačno ispod staklene kupole. Ona stoji malo iza nje, pomarena u
         stranu, skrivena iza bezbednosne trake.
+      bg: >-
+        Не търси табелата точно под стъкления купол. Тя стои малко зад него, леко встрани,
+        скрита зад предпазно въже.
     hint2: >-
       The street has a more famous sister that runs from east to west, called the Decumanus.
       Look for the one that crosses her path.
@@ -590,6 +769,9 @@ landmarks:
       sr: >-
         Ulica ima poznatiju sestru koja ide od istoka ka zapadu, zvanu Dekumanus. Traži onu
         koja preseca njen put.
+      bg: >-
+        Улицата има по-известна сестра, която върви от изток на запад и се нарича
+        Декуманус. Потърси онази, която пресича нейния път.
     tourist_info: |
       The remains of the Roman city were uncovered between 2010 and 2012, during the
       construction of the Serdika 2 metro station. The discoveries include parts of the city's
@@ -640,3 +822,20 @@ landmarks:
         kao najveći muzej na otvorenom na Balkanu. Ispod staklene kupole između Predsedništva
         i Saveta ministara postavljena je bina sa ruševinama Serdike kao pozadinom. U blizini
         ulaza u metro stanicu nalaze se i ostaci ranohrišćanske bazilike iz 4. veka.
+      bg: |
+        Останките на римския град са разкрити между 2010 и 2012 г. по време на
+        строителството на метростанция „Сердика 2“. Сред откритията са части от двете
+        главни улици на града: Кардо Максимус, който свързвал северната и южната порта, и
+        Декуманус Максимус, който свързвал източната и западната порта. Двете се
+        пресичали под прав ъгъл, а на кръстовището им стоял форумът — централният
+        площад на града. Улицата от табелата е една от вторичните улици, образували
+        градската мрежа. Тя е широка 5 метра, разкопани са 10 метра от нея, а паважът ѝ
+        датира от VI век. Под нея са изложени части от древния водопровод и канализация —
+        доказателство, че Сердика е бил добре планиран град.
+
+        Комплексът е официално открит през 2016 г. след шест години работа на около сто
+        археолози и петима архитекти. Той се простира на 8 000 квадратни метра и при
+        откриването си е представен като най-големият музей на открито на Балканите. Под
+        стъкления купол между Президентството и Министерския съвет е обособена сцена с
+        руините на Сердика като фон. Близо до входа на метростанцията са запазени и
+        останки от раннохристиянска базилика от IV век.

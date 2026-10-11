@@ -19,12 +19,13 @@ test("renders nothing for a game without translations", () => {
 test("opens a sheet listing every language by its own name and selects on tap", async () => {
   const user = userEvent.setup();
   const onSelect = vi.fn();
-  render(<LanguageToggle languages={["de", "sr"]} selected="en" onSelect={onSelect} />);
+  render(<LanguageToggle languages={["de", "sr", "bg"]} selected="en" onSelect={onSelect} />);
   await user.click(screen.getByRole("button", { name: "Language, EN" }));
   expect(screen.getByRole("dialog", { name: "Language" })).toBeInTheDocument();
   expect(screen.getByRole("option", { name: "English" })).toBeInTheDocument();
   expect(screen.getByRole("option", { name: "Deutsch" })).toBeInTheDocument();
   expect(screen.getByRole("option", { name: "Srpski" })).toBeInTheDocument();
+  expect(screen.getByRole("option", { name: "Български" })).toBeInTheDocument();
   await user.click(screen.getByRole("option", { name: "Srpski" }));
   expect(onSelect).toHaveBeenCalledWith("sr");
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

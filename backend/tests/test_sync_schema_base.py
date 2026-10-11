@@ -1,7 +1,9 @@
 from datetime import UTC, date, datetime
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
+from ruamel.yaml import YAML
 
 from questtour.sync.schema import (
     AssignmentBaseCfg,
@@ -13,6 +15,27 @@ from questtour.sync.schema import (
     TeamBaseCfg,
     TeamCfg,
 )
+
+
+def test_sample_config_supports_bulgarian():
+    """The shipped sample config (the default game) carries Bulgarian in every i18n map.
+
+    English lives in the base fields, so a Bulgarian-speaking team depends on `bg` being
+    present for every landmark field.
+    """
+    config_dir = Path(__file__).resolve().parents[1] / "config"
+    doc = YAML(typ="safe").load((config_dir / "landmarks.yaml").read_text(encoding="utf-8"))
+    landmarks = [LandmarkCfg.model_validate(raw) for raw in doc["landmarks"]]
+
+    i18n_maps = ("name_i18n", "task_i18n", "hint1_i18n", "hint2_i18n", "tourist_info_i18n")
+    languages: set[str] = set()
+    for lm in landmarks:
+        for key in i18n_maps:
+            table = getattr(lm, key) or {}
+            assert "bg" in table, f"{lm.id} is missing Bulgarian in {key}"
+            assert table["bg"].strip(), f"{lm.id} has blank Bulgarian in {key}"
+            languages.update(table)
+    assert languages >= {"bg", "de", "sr"}
 
 
 def test_landmark_base_cfg_validates_minimal_data():
