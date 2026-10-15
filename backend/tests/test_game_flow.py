@@ -424,6 +424,17 @@ def test_service_run_never_hits_time_limits(session_factory, clock):
         assert run.end_reason is None and run.ended_at is None
 
 
+def test_service_run_keeps_every_pause_free(session_factory, clock):
+    with session_factory() as session:
+        assignment = _service_assignment(session, clock)
+        run = rules.start_run(session, assignment, clock.now)
+        clock.advance(minutes=5)
+        rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
+        clock.advance(minutes=10)                  # parked past the grace: R-25 keeps it free
+        assert rules.active_seconds(run, clock.now) == 5 * 60
+        assert rules.elapsed_seconds(run, clock.now) == 5 * 60
+
+
 def test_service_reveal_is_instant(session_factory, clock):
     with session_factory() as session:
         assignment = _service_assignment(session, clock)

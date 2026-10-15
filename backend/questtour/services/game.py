@@ -133,13 +133,15 @@ def active_seconds(run: GameRun, now: datetime) -> int:
     """Active time on the clock: the sum of per-task solving intervals shown_at → completed_at
     (the still-open interval of the unfinished current task running to `ended_at` or `now`), plus
     the part of every pause beyond the 5-minute grace (issue #49). The first 5 minutes of a pause
-    count toward nothing — no score, no deadline."""
+    count toward nothing — no score, no deadline. Service runs (R-25) keep every pause free."""
     total = 0.0
     for task in run.tasks:
         if task.shown_at is None:
             continue
         end = task.completed_at if task.completed_at is not None else run.ended_at or now
         total += max(0, (end - task.shown_at).total_seconds())
+    if is_service(run.assignment):
+        return int(total)
     return int(total + pause_overage_seconds(run, now))
 
 
