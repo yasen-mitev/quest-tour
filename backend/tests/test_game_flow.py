@@ -305,6 +305,37 @@ def test_active_seconds_sums_intervals_and_skips_pauses(session, run, clock):
     assert rules.elapsed_seconds(run, clock.now) == 7 * 60
 
 
+def test_pause_over_the_grace_counts_as_solving_time(session, run, clock):
+    clock.advance(minutes=5)
+    rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
+    clock.advance(minutes=8)                       # 5 min grace + 3 min overage
+    run.tasks[0].photo_count += 1
+    rules.advance(run, 0, clock.now)
+    clock.advance(minutes=2)
+    assert rules.active_seconds(run, clock.now) == (5 + 3 + 2) * 60
+
+
+def test_each_pause_gets_its_own_grace(session, run, clock):
+    # task 1 pauses 7 min (2 min overage); task 2 pauses 3 min (free); task 3 solved in 5
+    for position, answer in enumerate(["Alexander Nevsky", "Rotunda of St George", "Serdika"]):
+        clock.advance(minutes=5)
+        rules.submit_answer(session, run, position, answer, clock.now, None)
+        clock.advance(minutes=7 if position == 0 else 3)
+        run.tasks[position].photo_count += 1
+        rules.advance(run, position, clock.now)
+    assert rules.active_seconds(run, clock.now) == (5 + 2 + 5 + 5) * 60
+
+
+def test_pause_of_exactly_five_minutes_is_free(session, run, clock):
+    clock.advance(minutes=5)
+    rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
+    clock.advance(minutes=5)                       # exactly the grace: nothing spent
+    run.tasks[0].photo_count += 1
+    rules.advance(run, 0, clock.now)
+    clock.advance(minutes=1)
+    assert rules.active_seconds(run, clock.now) == 6 * 60
+
+
 def test_active_seconds_caps_at_ended_at_for_a_timed_out_run(run, assignment, clock):
     clock.advance(minutes=241)
     rules.apply_time_limits(run, assignment, clock.now)
@@ -369,6 +400,8 @@ def test_load_run_returns_run_for_assignment(session, run, seed):
 
 def test_constants():
     assert rules.HINT_PENALTIES == {1: 10, 2: 15}
+    assert rules.COMPASS_PENALTY_MINUTES == 5
+    assert rules.PHOTO_GRACE_SECONDS == 300
     assert rules.WARNING_SECONDS == 900
     assert rules.TIMED_OUT == frozenset({"max_duration", "window_closed"})
 

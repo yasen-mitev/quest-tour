@@ -9,6 +9,7 @@ from questtour.normalize import is_correct
 
 HINT_PENALTIES: dict[int, int] = {1: 10, 2: 15}   # R-4 (fixed, not per game)
 COMPASS_PENALTY_MINUTES: int = 5                   # R-26
+PHOTO_GRACE_SECONDS = 5 * 60                       # issue #49: each task pause is free for 5 minutes
 WARNING_SECONDS = 15 * 60                         # R-8, R-14
 TIMED_OUT = frozenset({"max_duration", "window_closed"})
 
@@ -48,7 +49,7 @@ def run_status(run: GameRun) -> str:
 def effective_deadline(run: GameRun, assignment: Assignment) -> tuple[int, str]:
     """Active-time budgets (R-8): the run ends when its active time reaches the game's max
     duration or the assignment's remaining window (valid_until - started_at), whichever is
-    smaller. Only solving time spends either budget; the pause between tasks is free."""
+    smaller. Solving time spends the budget, and so does a pause past its 5-minute grace (issue #49)."""
     by_duration = assignment.game.max_duration_minutes * 60
     by_window = max(0, int((assignment.valid_until - run.started_at).total_seconds()))
     if by_window < by_duration:
@@ -88,18 +89,44 @@ def bump(run: GameRun) -> None:
     run.version += 1
 
 
+def _pause_seconds(run: GameRun, index: int, now: datetime) -> float:
+    """Length of task `index`'s pause: from its completed_at to the moment the next task was
+    shown; the still-open pause of the current completed task runs to `ended_at` (or `now`).
+    A task that is not completed has no pause, and the last task's completion ends the run
+    (finished_at == completed_at), so a finished run has none either."""
+    task = run.tasks[index]
+    if task.completed_at is None:
+        return 0.0
+    following = run.tasks[index + 1] if index + 1 < len(run.tasks) else None
+    if following is not None and following.shown_at is not None:
+        end: datetime = following.shown_at
+    else:
+        end = run.ended_at or now
+    return max(0.0, (end - task.completed_at).total_seconds())
+
+
+def pause_overage_seconds(run: GameRun, now: datetime) -> float:
+    """The part of every task pause beyond the 5-minute grace (issue #49); past the grace a
+    pause counts like solving time. Each pause gets its own grace."""
+    return sum(
+        max(0.0, _pause_seconds(run, index, now) - PHOTO_GRACE_SECONDS)
+        for index, task in enumerate(run.tasks)
+        if task.completed_at is not None
+    )
+
+
 def active_seconds(run: GameRun, now: datetime) -> int:
-    """Active riddle-solving time: the sum of per-task intervals shown_at → completed_at, the
-    still-open interval of the unfinished current task running to `ended_at` (or `now` while
-    the run is live). The pause between completing a task and showing the next one belongs to
-    no interval, so it counts toward nothing — no score, no deadline, no clock."""
+    """Active time on the clock: the sum of per-task solving intervals shown_at → completed_at
+    (the still-open interval of the unfinished current task running to `ended_at` or `now`), plus
+    the part of every pause beyond the 5-minute grace (issue #49). The first 5 minutes of a pause
+    count toward nothing — no score, no deadline."""
     total = 0.0
     for task in run.tasks:
         if task.shown_at is None:
             continue
         end = task.completed_at if task.completed_at is not None else run.ended_at or now
         total += max(0, (end - task.shown_at).total_seconds())
-    return int(total)
+    return int(total + pause_overage_seconds(run, now))
 
 
 def elapsed_seconds(run: GameRun, now: datetime) -> int:
