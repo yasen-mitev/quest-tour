@@ -64,24 +64,38 @@ def is_service(assignment: Assignment) -> bool:
 
 def apply_time_limits(run: GameRun, assignment: Assignment, now: datetime) -> None:
     """R-8: called on every request; the end time is the moment the budget was spent, not the
-    request time. A paused run (current task completed) never ends by time.
+    request time. A paused run spends nothing for the first 5 minutes of its pause; past that
+    grace the pause counts like solving time and can end the run (issue #49).
     Service runs (R-25) never end by time."""
     if run.end_reason is not None or is_service(assignment):
         return
     task = current_task(run)
-    if task is None or task.shown_at is None or task.completed_at is not None:
-        return                                       # nothing is on the clock: pauses are free
+    if task is None or task.shown_at is None:
+        return
     budget, reason = effective_deadline(run, assignment)
-    spent = sum(
+    solved = sum(
         (t.completed_at - t.shown_at).total_seconds()
         for t in run.tasks
         if t.shown_at is not None and t.completed_at is not None
     )
-    left = budget - spent
-    if (now - task.shown_at).total_seconds() >= left:
-        run.ended_at = task.shown_at + timedelta(seconds=max(0, left))
-        run.end_reason = reason
-        bump(run)
+    if task.completed_at is None:                    # riddle on the clock
+        spent = solved + pause_overage_seconds(run, now)   # earlier pauses are all closed here
+        left = budget - spent
+        if (now - task.shown_at).total_seconds() >= left:
+            run.ended_at = task.shown_at + timedelta(seconds=max(0, left))
+            run.end_reason = reason
+            bump(run)
+    else:                                            # paused between tasks (issue #49)
+        # Passing completed_at as `now` zeroes the still-open pause, so only the closed pauses'
+        # overages count toward what is already spent; the open pause spends budget from
+        # completed_at + grace onwards.
+        spent = solved + pause_overage_seconds(run, task.completed_at)
+        left = budget - spent
+        free_until = task.completed_at + timedelta(seconds=PHOTO_GRACE_SECONDS)
+        if (now - free_until).total_seconds() >= left:
+            run.ended_at = free_until + timedelta(seconds=max(0, left))
+            run.end_reason = reason
+            bump(run)
 
 
 def bump(run: GameRun) -> None:

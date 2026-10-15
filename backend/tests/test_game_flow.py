@@ -353,33 +353,34 @@ def test_total_seconds_counts_active_time_only(session, run, clock):
     assert rules.total_seconds(run) == 30 * 60
 
 
-def test_max_duration_counts_active_time_only(session, run, assignment, clock):
+def test_max_duration_ends_during_the_pause_past_the_grace(session, run, assignment, clock):
     clock.advance(minutes=239)
     rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
-    clock.advance(days=30)                         # parked on the photo screen: never times out
+    clock.advance(minutes=4)                       # inside the grace: nothing is spent yet
     rules.apply_time_limits(run, assignment, clock.now)
     assert run.end_reason is None
-    run.tasks[0].photo_count += 1
-    rules.advance(run, 0, clock.now)               # the next riddle restarts the clock
-    clock.advance(minutes=2)
+    clock.advance(minutes=2)                       # 6 min into the pause: the budget runs out
     rules.apply_time_limits(run, assignment, clock.now)
     assert run.end_reason == "max_duration"
-    assert run.ended_at == run.tasks[1].shown_at + timedelta(minutes=1)
+    assert run.ended_at == run.tasks[0].completed_at + timedelta(minutes=6)
 
 
-def test_window_budget_counts_active_time_only(session, run, assignment, clock):
+def test_window_budget_ends_during_the_pause_past_the_grace(session, run, assignment, clock):
     assignment.valid_until = clock.now + timedelta(hours=1)
     clock.advance(minutes=59)
     rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
-    clock.advance(days=30)                         # the window budget is not spent while paused
-    rules.apply_time_limits(run, assignment, clock.now)
-    assert run.end_reason is None
-    run.tasks[0].photo_count += 1
-    rules.advance(run, 0, clock.now)
-    clock.advance(minutes=2)
+    clock.advance(minutes=6)                       # 5 min grace + 1 min left on the window
     rules.apply_time_limits(run, assignment, clock.now)
     assert run.end_reason == "window_closed"
-    assert run.ended_at == run.tasks[1].shown_at + timedelta(minutes=1)
+    assert run.ended_at == run.tasks[0].completed_at + timedelta(minutes=6)
+
+
+def test_pause_within_the_grace_does_not_time_the_run_out(session, run, assignment, clock):
+    clock.advance(minutes=239)
+    rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
+    clock.advance(minutes=5)                       # exactly the grace, not a second more
+    rules.apply_time_limits(run, assignment, clock.now)
+    assert run.end_reason is None
 
 
 def test_touch_device_records_first_and_last_seen(session, run, clock):
