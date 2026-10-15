@@ -144,19 +144,21 @@ def test_clock_uses_window_close_when_earlier(session, assignment, run, clock):
     assert build_clock(run, assignment, clock.now).remaining_seconds == 30 * 60
 
 
-def test_clock_freezes_while_the_task_is_completed(session, assignment, run, clock):
+def test_clock_freezes_within_the_grace_then_resumes(session, assignment, run, clock):
     clock.advance(minutes=5)
     rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
-    clock.advance(minutes=3)                       # photo/landmark screens: within the grace
+    clock.advance(minutes=3)                       # photo/landmark screens: inside the grace
     out = build_clock(run, assignment, clock.now)
     assert (out.running, out.elapsed_seconds, out.remaining_seconds) == (
         False, 5 * 60, (240 - 5) * 60,
     )
-    clock.advance(minutes=4)                       # the grace is spent: the overage counts
+    assert out.grace_seconds_remaining == 2 * 60   # rounded up
+    clock.advance(minutes=4)                       # the grace is spent: the pause counts again
     out = build_clock(run, assignment, clock.now)
     assert (out.running, out.elapsed_seconds, out.remaining_seconds) == (
-        False, 7 * 60, (240 - 7) * 60,
+        True, 7 * 60, (240 - 7) * 60,
     )
+    assert out.grace_seconds_remaining is None
     run.tasks[0].photo_count += 1
     rules.advance(run, 0, clock.now)               # the next riddle restarts the clock
     clock.advance(minutes=1)
@@ -164,6 +166,24 @@ def test_clock_freezes_while_the_task_is_completed(session, assignment, run, clo
     assert (out.running, out.elapsed_seconds, out.remaining_seconds) == (
         True, 8 * 60, (240 - 8) * 60,
     )
+
+
+def test_grace_is_hidden_for_service_finished_and_timed_out_runs(session, assignment, run, clock):
+    clock.advance(minutes=5)
+    rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
+    clock.advance(minutes=2)
+    assert build_clock(run, assignment, clock.now).grace_seconds_remaining == 3 * 60
+    # service runs (R-25) have no deadline, so no countdown and a permanently frozen pause
+    assignment.team.is_service = True
+    service = build_clock(run, assignment, clock.now)
+    assert (service.running, service.grace_seconds_remaining) == (False, None)
+    assignment.team.is_service = False
+    # once the run has ended, no countdown may leak onto the results screens
+    run.end_reason = "finished"
+    run.finished_at = run.ended_at = clock.now
+    assert build_clock(run, assignment, clock.now).grace_seconds_remaining is None
+    run.end_reason = "max_duration"
+    assert build_clock(run, assignment, clock.now).grace_seconds_remaining is None
 
 
 def test_task_never_leaks_unopened_hint_text_or_landmark(session, assignment, run, clock):
