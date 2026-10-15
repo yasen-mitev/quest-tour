@@ -22,7 +22,7 @@ export function makeState(overrides: Partial<GameState> = {}): GameState {
             max_duration_minutes: 240, hint_penalties: [10, 15], reveal_after_attempts: 5,
             reveal_after_minutes: 20, reveal_penalty_minutes: 30, available_languages: [] },
     team: { name: "The Explorers" },
-    clock: { elapsed_seconds: 4365, running: true, penalty_minutes: 25, remaining_seconds: 10035, warning: false },
+    clock: { elapsed_seconds: 4365, running: true, grace_seconds_remaining: null, penalty_minutes: 25, remaining_seconds: 10035, warning: false },
     task: makeTask(), results: null, ...overrides,
   };
 }

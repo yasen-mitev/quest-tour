@@ -12,7 +12,7 @@ export interface Task {
   landmark: LandmarkInfo | null; photo_count: number; compass: Compass | null;
   rating: number | null;          // this phone's 1–5 stars for the riddle (issue #38), once it is completed
 }
-export interface Clock { elapsed_seconds: number; running: boolean; penalty_minutes: number; remaining_seconds: number | null; warning: boolean; }
+export interface Clock { elapsed_seconds: number; running: boolean; grace_seconds_remaining: number | null; penalty_minutes: number; remaining_seconds: number | null; warning: boolean; }
 export interface GameInfo {
   name: string; intro: string; task_count: number; time_zone: string; max_duration_minutes: number;
   hint_penalties: number[]; reveal_after_attempts: number; reveal_after_minutes: number; reveal_penalty_minutes: number;
