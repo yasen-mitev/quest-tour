@@ -297,7 +297,7 @@ def test_elapsed_seconds_while_playing(run, clock):
 def test_active_seconds_sums_intervals_and_skips_pauses(session, run, clock):
     clock.advance(minutes=5)
     rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
-    clock.advance(minutes=3)                       # photo screen: the clock is stopped
+    clock.advance(minutes=3)                       # photo screen: inside the grace, the clock is stopped
     run.tasks[0].photo_count += 1
     rules.advance(run, 0, clock.now)
     clock.advance(minutes=2)
