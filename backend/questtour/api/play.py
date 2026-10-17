@@ -306,8 +306,9 @@ def reset(
     if not rules.is_service(assignment):
         raise HTTPException(404, "Not Found")  # invisible to real teams
     run = rules.load_run(session, assignment.id)
-    blob_names = reset_run(session, assignment, run) if run is not None else []
+    photo_blobs, album_blobs = reset_run(session, assignment, run) if run is not None else ([], [])
     result = _respond(Ctx(session, assignment, None, now, device_id), rules.Outcome.OK, "reset")
     settings = request.app.state.settings
-    delete_photo_blobs(request.app.state.blob_store, settings.photos_container, blob_names)
+    delete_photo_blobs(request.app.state.blob_store, settings.photos_container, photo_blobs)
+    delete_photo_blobs(request.app.state.blob_store, settings.albums_container, album_blobs)
     return result
