@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import select
 
-from questtour.models import AnswerAttempt, GameRun, Photo, RunDevice, RunTask
+from questtour.models import AnswerAttempt, GameRun, Photo, RunDevice, RunTask, TeamAlbum
 from questtour.storage import StorageUnavailable
 from tests.factories import JPEG, add_service_assignment, play_through
 
@@ -96,6 +96,22 @@ def test_reset_wipes_everything_and_link_restarts(client, service, session_facto
     assert restarted["outcome"] == "ok"
     assert restarted["state"]["version"] > body["state"]["version"]
     assert restarted["state"]["position"] == 0 and restarted["state"]["task"]["wrong_attempts"] == 0
+
+
+def test_reset_wipes_the_stored_album(client, service, clock, blob_store, session_factory):
+    """A reset also drops the memories album of the finished run: the record would otherwise
+    survive into the new run, and a live one would keep serving the previous run's PDF."""
+    play_through(client, service, clock)
+    pdf = client.get(f"/api/play/{service}/album.pdf")
+    assert pdf.status_code == 200 and pdf.content.startswith(b"%PDF-")
+    with session_factory() as s:
+        blob = s.scalars(select(TeamAlbum.blob_name)).one()
+    assert blob_store.exists("albums", blob)
+
+    assert client.post(f"/api/play/{service}/reset").status_code == 200
+    with session_factory() as s:
+        assert s.scalars(select(TeamAlbum)).all() == []
+    assert not blob_store.exists("albums", blob)
 
 
 def test_finished_service_game_can_be_replayed(client, service, clock):
