@@ -107,13 +107,23 @@ def test_photo_after_timeout_is_game_over(session, blob_store, assignment, run, 
     assert session.query(Photo).count() == 0
 
 
-def test_photo_during_the_pause_does_not_time_the_run_out(session, blob_store, assignment, run, clock):
+def test_photo_within_the_grace_does_not_time_the_run_out(session, blob_store, assignment, run, clock):
     answer_current(session, run, clock)
-    clock.advance(days=30)                         # parked on the photo screen: the clock is stopped
+    clock.advance(minutes=4)                       # parked on the photo screen: inside the 5-min grace
     rules.apply_time_limits(run, assignment, clock.now)
     assert run.end_reason is None
     assert upload(session, blob_store, run, assignment, clock, 0) == Outcome.OK
     assert session.query(Photo).count() == 1
+
+
+def test_photo_past_the_grace_finds_the_run_timed_out(session, blob_store, assignment, run, clock):
+    clock.advance(minutes=239)                     # nearly all of the 4-hour budget is spent
+    answer_current(session, run, clock)
+    clock.advance(minutes=30)                      # 25 min past the grace: the pause spends the rest
+    rules.apply_time_limits(run, assignment, clock.now)
+    assert run.end_reason == "max_duration"
+    assert upload(session, blob_store, run, assignment, clock, 0) == Outcome.GAME_OVER
+    assert session.query(Photo).count() == 0
 
 
 def test_filename_uses_game_time_zone(session, blob_store, assignment, run, clock):

@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
 import { GameHeader } from "./GameHeader";
 
-const base = { elapsed_seconds: 4365, running: true, penalty_minutes: 25, remaining_seconds: 10035, warning: false };
+const base = { elapsed_seconds: 4365, running: true, grace_seconds_remaining: null, penalty_minutes: 25, remaining_seconds: 10035, warning: false };
 const common = { availableLanguages: ["de", "sr"], language: "en", onLanguageChange: () => {} };
 
 it("shows clock, penalty and progress", () => {
@@ -43,6 +43,41 @@ it("freezes both clocks while the server says the run is paused", () => {
     rerender(<GameHeader {...props} />);
     expect(screen.getByText("00:05:00")).toBeInTheDocument();   // no drift while paused
     expect(screen.getByRole("banner")).not.toHaveClass("qc-header--warning");
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("shows the grace countdown while the run is paused within the grace", () => {
+  vi.useFakeTimers();
+  try {
+    vi.setSystemTime(new Date("2026-10-14T08:00:00Z"));
+    const clock = { ...base, running: false, grace_seconds_remaining: 240, elapsed_seconds: 300, remaining_seconds: 900 };
+    const receivedAt = Date.now();
+    const props = { clock, position: 1, taskCount: 8, receivedAt, onTimeUp: () => {}, ...common };
+    const { rerender } = render(<GameHeader {...props} />);
+    expect(screen.getByText("04:00 left")).toBeInTheDocument();
+    act(() => { vi.advanceTimersByTime(10_000); });
+    rerender(<GameHeader {...props} />);
+    expect(screen.getByText("03:50 left")).toBeInTheDocument();   // the countdown ticks while paused
+    expect(screen.getByRole("banner")).not.toHaveClass("qc-header--warning");
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("asks the server once when the local grace countdown reaches zero", () => {
+  vi.useFakeTimers();
+  try {
+    vi.setSystemTime(new Date("2026-10-14T08:00:00Z"));
+    const onTimeUp = vi.fn();
+    const clock = { ...base, running: false, grace_seconds_remaining: 5, elapsed_seconds: 300, remaining_seconds: 900 };
+    const receivedAt = Date.now();
+    const props = { clock, position: 1, taskCount: 8, receivedAt, onTimeUp, ...common };
+    const { rerender } = render(<GameHeader {...props} />);
+    act(() => { vi.advanceTimersByTime(6_000); });
+    rerender(<GameHeader {...props} />);
+    expect(onTimeUp).toHaveBeenCalledTimes(1);
   } finally {
     vi.useRealTimers();
   }

@@ -51,6 +51,7 @@ class TaskOut(BaseModel):
 class ClockOut(BaseModel):
     elapsed_seconds: int
     running: bool
+    grace_seconds_remaining: int | None  # live pause within the 5-min grace (issue #49); None otherwise
     penalty_minutes: int
     remaining_seconds: int | None
     warning: bool

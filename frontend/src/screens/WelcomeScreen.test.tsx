@@ -33,6 +33,13 @@ it("lists the rules with the reveal penalty from the game settings", () => {
   expect(screen.getByRole("heading", { name: "Sofia Old Town Quest" })).toBeInTheDocument();
 });
 
+it("tells players the photo stop is free for 5 minutes, then the clock runs again", () => {
+  renderWelcome();
+  expect(screen.getByText(/free for 5 minutes/)).toBeInTheDocument();
+  expect(screen.getByText(/after that the clock runs again/)).toBeInTheDocument();
+  expect(screen.queryByText(/runs without pause/)).not.toBeInTheDocument();
+});
+
 it("asks for confirmation before calling onStart", async () => {
   const onStart = vi.fn().mockResolvedValue("ok");
   renderWelcome({ onStart });

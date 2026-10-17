@@ -9,6 +9,7 @@ from questtour.normalize import is_correct
 
 HINT_PENALTIES: dict[int, int] = {1: 10, 2: 15}   # R-4 (fixed, not per game)
 COMPASS_PENALTY_MINUTES: int = 5                   # R-26
+PHOTO_GRACE_SECONDS = 5 * 60                       # issue #49: each task pause is free for 5 minutes
 WARNING_SECONDS = 15 * 60                         # R-8, R-14
 TIMED_OUT = frozenset({"max_duration", "window_closed"})
 
@@ -48,7 +49,7 @@ def run_status(run: GameRun) -> str:
 def effective_deadline(run: GameRun, assignment: Assignment) -> tuple[int, str]:
     """Active-time budgets (R-8): the run ends when its active time reaches the game's max
     duration or the assignment's remaining window (valid_until - started_at), whichever is
-    smaller. Only solving time spends either budget; the pause between tasks is free."""
+    smaller. Solving time spends the budget, and so does a pause past its 5-minute grace (issue #49)."""
     by_duration = assignment.game.max_duration_minutes * 60
     by_window = max(0, int((assignment.valid_until - run.started_at).total_seconds()))
     if by_window < by_duration:
@@ -63,24 +64,38 @@ def is_service(assignment: Assignment) -> bool:
 
 def apply_time_limits(run: GameRun, assignment: Assignment, now: datetime) -> None:
     """R-8: called on every request; the end time is the moment the budget was spent, not the
-    request time. A paused run (current task completed) never ends by time.
+    request time. A paused run spends nothing for the first 5 minutes of its pause; past that
+    grace the pause counts like solving time and can end the run (issue #49).
     Service runs (R-25) never end by time."""
     if run.end_reason is not None or is_service(assignment):
         return
     task = current_task(run)
-    if task is None or task.shown_at is None or task.completed_at is not None:
-        return                                       # nothing is on the clock: pauses are free
+    if task is None or task.shown_at is None:
+        return
     budget, reason = effective_deadline(run, assignment)
-    spent = sum(
+    solved = sum(
         (t.completed_at - t.shown_at).total_seconds()
         for t in run.tasks
         if t.shown_at is not None and t.completed_at is not None
     )
-    left = budget - spent
-    if (now - task.shown_at).total_seconds() >= left:
-        run.ended_at = task.shown_at + timedelta(seconds=max(0, left))
-        run.end_reason = reason
-        bump(run)
+    if task.completed_at is None:                    # riddle on the clock
+        spent = solved + pause_overage_seconds(run, now)   # earlier pauses are all closed here
+        left = budget - spent
+        if (now - task.shown_at).total_seconds() >= left:
+            run.ended_at = task.shown_at + timedelta(seconds=max(0, left))
+            run.end_reason = reason
+            bump(run)
+    else:                                            # paused between tasks (issue #49)
+        # Passing completed_at as `now` zeroes the still-open pause, so only the closed pauses'
+        # overages count toward what is already spent; the open pause spends budget from
+        # completed_at + grace onwards.
+        spent = solved + pause_overage_seconds(run, task.completed_at)
+        left = budget - spent
+        free_until = task.completed_at + timedelta(seconds=PHOTO_GRACE_SECONDS)
+        if (now - free_until).total_seconds() >= left:
+            run.ended_at = free_until + timedelta(seconds=max(0, left))
+            run.end_reason = reason
+            bump(run)
 
 
 def bump(run: GameRun) -> None:
@@ -88,18 +103,46 @@ def bump(run: GameRun) -> None:
     run.version += 1
 
 
+def _pause_seconds(run: GameRun, index: int, now: datetime) -> float:
+    """Length of task `index`'s pause: from its completed_at to the moment the next task was
+    shown; the still-open pause of the current completed task runs to `ended_at` (or `now`).
+    A task that is not completed has no pause, and the last task's completion ends the run
+    (finished_at == completed_at), so a finished run has none either."""
+    task = run.tasks[index]
+    if task.completed_at is None:
+        return 0.0
+    following = run.tasks[index + 1] if index + 1 < len(run.tasks) else None
+    if following is not None and following.shown_at is not None:
+        end: datetime = following.shown_at
+    else:
+        end = run.ended_at or now
+    return max(0.0, (end - task.completed_at).total_seconds())
+
+
+def pause_overage_seconds(run: GameRun, now: datetime) -> float:
+    """The part of every task pause beyond the 5-minute grace (issue #49); past the grace a
+    pause counts like solving time. Each pause gets its own grace."""
+    return sum(
+        max(0.0, _pause_seconds(run, index, now) - PHOTO_GRACE_SECONDS)
+        for index, task in enumerate(run.tasks)
+        if task.completed_at is not None
+    )
+
+
 def active_seconds(run: GameRun, now: datetime) -> int:
-    """Active riddle-solving time: the sum of per-task intervals shown_at → completed_at, the
-    still-open interval of the unfinished current task running to `ended_at` (or `now` while
-    the run is live). The pause between completing a task and showing the next one belongs to
-    no interval, so it counts toward nothing — no score, no deadline, no clock."""
+    """Active time on the clock: the sum of per-task solving intervals shown_at → completed_at
+    (the still-open interval of the unfinished current task running to `ended_at` or `now`), plus
+    the part of every pause beyond the 5-minute grace (issue #49). The first 5 minutes of a pause
+    count toward nothing — no score, no deadline. Service runs (R-25) keep every pause free."""
     total = 0.0
     for task in run.tasks:
         if task.shown_at is None:
             continue
         end = task.completed_at if task.completed_at is not None else run.ended_at or now
         total += max(0, (end - task.shown_at).total_seconds())
-    return int(total)
+    if is_service(run.assignment):
+        return int(total)
+    return int(total + pause_overage_seconds(run, now))
 
 
 def elapsed_seconds(run: GameRun, now: datetime) -> int:

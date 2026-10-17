@@ -54,10 +54,10 @@ export function WelcomeScreen({ state, frame, language, onLanguageChange, onStar
             <h2 className="t-title">How it works</h2>
             <ul className="qs-rules">
               {rule("list", "Tasks are played in order – solve one to unlock the next.")}
-              {rule("clock", `The clock starts when you tap Start and runs without pause. You have up to ${limit}.`)}
+              {rule("clock", `The clock starts when you tap Start and runs while you solve the riddles. You have up to ${limit}.`)}
               {rule("bulb", <>Stuck? Hint 1 adds <span className="qc-tag">{formatPenalty(game.hint_penalties[0])}</span>, hint 2 adds <span className="qc-tag">{formatPenalty(game.hint_penalties[1])}</span>.</>, true)}
               {rule("flag", <>Giving up on a task shows the answer and adds <span className="qc-tag">{formatPenalty(game.reveal_penalty_minutes)}</span>.</>, true)}
-              {rule("camera", "Take a team photo at every landmark to unlock the next riddle.")}
+              {rule("camera", <>Take a team photo at every landmark to unlock the next riddle. Each photo stop is free for 5 minutes — after that the clock runs again.</>)}
             </ul>
           </div>
           <div className="qs-note">

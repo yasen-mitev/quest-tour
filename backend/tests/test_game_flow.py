@@ -297,12 +297,43 @@ def test_elapsed_seconds_while_playing(run, clock):
 def test_active_seconds_sums_intervals_and_skips_pauses(session, run, clock):
     clock.advance(minutes=5)
     rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
-    clock.advance(minutes=3)                       # photo screen: the clock is stopped
+    clock.advance(minutes=3)                       # photo screen: inside the grace, the clock is stopped
     run.tasks[0].photo_count += 1
     rules.advance(run, 0, clock.now)
     clock.advance(minutes=2)
     assert rules.active_seconds(run, clock.now) == 7 * 60
     assert rules.elapsed_seconds(run, clock.now) == 7 * 60
+
+
+def test_pause_over_the_grace_counts_as_solving_time(session, run, clock):
+    clock.advance(minutes=5)
+    rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
+    clock.advance(minutes=8)                       # 5 min grace + 3 min overage
+    run.tasks[0].photo_count += 1
+    rules.advance(run, 0, clock.now)
+    clock.advance(minutes=2)
+    assert rules.active_seconds(run, clock.now) == (5 + 3 + 2) * 60
+
+
+def test_each_pause_gets_its_own_grace(session, run, clock):
+    # task 1 pauses 7 min (2 min overage); task 2 pauses 3 min (free); task 3 solved in 5
+    for position, answer in enumerate(["Alexander Nevsky", "Rotunda of St George", "Serdika"]):
+        clock.advance(minutes=5)
+        rules.submit_answer(session, run, position, answer, clock.now, None)
+        clock.advance(minutes=7 if position == 0 else 3)
+        run.tasks[position].photo_count += 1
+        rules.advance(run, position, clock.now)
+    assert rules.active_seconds(run, clock.now) == (5 + 2 + 5 + 5) * 60
+
+
+def test_pause_of_exactly_five_minutes_is_free(session, run, clock):
+    clock.advance(minutes=5)
+    rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
+    clock.advance(minutes=5)                       # exactly the grace: nothing spent
+    run.tasks[0].photo_count += 1
+    rules.advance(run, 0, clock.now)
+    clock.advance(minutes=1)
+    assert rules.active_seconds(run, clock.now) == 6 * 60
 
 
 def test_active_seconds_caps_at_ended_at_for_a_timed_out_run(run, assignment, clock):
@@ -322,33 +353,34 @@ def test_total_seconds_counts_active_time_only(session, run, clock):
     assert rules.total_seconds(run) == 30 * 60
 
 
-def test_max_duration_counts_active_time_only(session, run, assignment, clock):
+def test_max_duration_ends_during_the_pause_past_the_grace(session, run, assignment, clock):
     clock.advance(minutes=239)
     rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
-    clock.advance(days=30)                         # parked on the photo screen: never times out
+    clock.advance(minutes=4)                       # inside the grace: nothing is spent yet
     rules.apply_time_limits(run, assignment, clock.now)
     assert run.end_reason is None
-    run.tasks[0].photo_count += 1
-    rules.advance(run, 0, clock.now)               # the next riddle restarts the clock
-    clock.advance(minutes=2)
+    clock.advance(minutes=2)                       # 6 min into the pause: the budget runs out
     rules.apply_time_limits(run, assignment, clock.now)
     assert run.end_reason == "max_duration"
-    assert run.ended_at == run.tasks[1].shown_at + timedelta(minutes=1)
+    assert run.ended_at == run.tasks[0].completed_at + timedelta(minutes=6)
 
 
-def test_window_budget_counts_active_time_only(session, run, assignment, clock):
+def test_window_budget_ends_during_the_pause_past_the_grace(session, run, assignment, clock):
     assignment.valid_until = clock.now + timedelta(hours=1)
     clock.advance(minutes=59)
     rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
-    clock.advance(days=30)                         # the window budget is not spent while paused
-    rules.apply_time_limits(run, assignment, clock.now)
-    assert run.end_reason is None
-    run.tasks[0].photo_count += 1
-    rules.advance(run, 0, clock.now)
-    clock.advance(minutes=2)
+    clock.advance(minutes=6)                       # 5 min grace + 1 min left on the window
     rules.apply_time_limits(run, assignment, clock.now)
     assert run.end_reason == "window_closed"
-    assert run.ended_at == run.tasks[1].shown_at + timedelta(minutes=1)
+    assert run.ended_at == run.tasks[0].completed_at + timedelta(minutes=6)
+
+
+def test_pause_within_the_grace_does_not_time_the_run_out(session, run, assignment, clock):
+    clock.advance(minutes=239)
+    rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
+    clock.advance(minutes=5)                       # exactly the grace, not a second more
+    rules.apply_time_limits(run, assignment, clock.now)
+    assert run.end_reason is None
 
 
 def test_touch_device_records_first_and_last_seen(session, run, clock):
@@ -369,6 +401,8 @@ def test_load_run_returns_run_for_assignment(session, run, seed):
 
 def test_constants():
     assert rules.HINT_PENALTIES == {1: 10, 2: 15}
+    assert rules.COMPASS_PENALTY_MINUTES == 5
+    assert rules.PHOTO_GRACE_SECONDS == 300
     assert rules.WARNING_SECONDS == 900
     assert rules.TIMED_OUT == frozenset({"max_duration", "window_closed"})
 
@@ -388,6 +422,17 @@ def test_service_run_never_hits_time_limits(session_factory, clock):
         clock.advance(days=10)
         rules.apply_time_limits(run, assignment, clock.now)
         assert run.end_reason is None and run.ended_at is None
+
+
+def test_service_run_keeps_every_pause_free(session_factory, clock):
+    with session_factory() as session:
+        assignment = _service_assignment(session, clock)
+        run = rules.start_run(session, assignment, clock.now)
+        clock.advance(minutes=5)
+        rules.submit_answer(session, run, 0, "Alexander Nevsky", clock.now, None)
+        clock.advance(minutes=10)                  # parked past the grace: R-25 keeps it free
+        assert rules.active_seconds(run, clock.now) == 5 * 60
+        assert rules.elapsed_seconds(run, clock.now) == 5 * 60
 
 
 def test_service_reveal_is_instant(session_factory, clock):
