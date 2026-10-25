@@ -20,7 +20,7 @@ export interface GameInfo {
 }
 export interface LeaderboardRow { rank: number; team_name: string; total_seconds: number; hints_used: number; is_you: boolean; }
 export interface RiddleRatingRow {
-  position: number; number: number; completion: "answered" | "revealed" | null;
+  position: number;
   landmark_name: string; landmark_name_i18n: Record<string, string>;
   rating: number | null;          // this phone's stars (issue #51)
 }

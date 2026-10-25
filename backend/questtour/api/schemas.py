@@ -84,8 +84,6 @@ class LeaderboardRowOut(BaseModel):
 
 class RiddleRatingOut(BaseModel):
     position: int
-    number: int
-    completion: Literal["answered", "revealed"] | None
     landmark_name: str
     landmark_name_i18n: dict[str, str]
     rating: int | None  # this phone's stars (issue #51)

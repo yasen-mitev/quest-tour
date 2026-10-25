@@ -204,8 +204,6 @@ def build_riddle_ratings(
     return [
         RiddleRatingOut(
             position=t.position,
-            number=t.position + 1,
-            completion=t.completion,
             landmark_name=t.landmark.name,
             landmark_name_i18n=t.landmark.name_i18n or {},
             rating=mine.get(t.id),

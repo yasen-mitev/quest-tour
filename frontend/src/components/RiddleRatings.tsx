@@ -4,9 +4,12 @@ import { Icon } from "./Icon";
 
 /** Rate any completed riddle once the game is over (issue #51). Same free, changeable, per-phone
  *  rating as right after the riddle (#38): tapping a star saves it at once. */
-export function RiddleRatings({ riddles, language, onRate }: {
-  riddles: RiddleRatingRow[]; language: string; onRate(position: number, stars: number): void;
+export function RiddleRatings({ riddles: given = [], language, onRate }: {
+  riddles?: RiddleRatingRow[]; language: string; onRate(position: number, stars: number): void;
 }) {
+  // `?? []`: the backend serves this SPA, so an old process can still return results without
+  // `riddles` right after a deploy — the card must vanish, not crash the screen.
+  const riddles = given ?? [];
   if (riddles.length === 0) return null;
   return (
     <section className="qs-card qs-rate-list" aria-labelledby="rate-riddles-label">
@@ -16,8 +19,8 @@ export function RiddleRatings({ riddles, language, onRate }: {
           const name = pickText(r.landmark_name, r.landmark_name_i18n, language);
           return (
             <li key={r.position} className="qs-rate-list__row">
-              <span className="qs-rate-list__name"><span className="t-caption">{r.number}.</span> {name}</span>
-              <div className="qs-rate__stars" role="radiogroup" aria-label={`Rate ${name}`}>
+              <span className="qs-rate-list__name"><span className="t-caption">{r.position + 1}.</span> {name}</span>
+              <div className="qs-rate__stars" role="radiogroup" aria-label={`Rate ${r.position + 1}. ${name}`}>
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button key={n} type="button" role="radio" aria-checked={r.rating === n}
                           aria-label={`${n} star${n === 1 ? "" : "s"}`}

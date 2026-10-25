@@ -16,17 +16,17 @@ const results = {
 };
 
 const riddles: RiddleRatingRow[] = [
-  { position: 0, number: 1, completion: "answered" as const, landmark_name: "Alexander Nevsky Cathedral", landmark_name_i18n: { bg: "Александър Невски" }, rating: 5 },
-  { position: 1, number: 2, completion: "revealed" as const, landmark_name: "Sofia University", landmark_name_i18n: {}, rating: null },
+  { position: 0, landmark_name: "Alexander Nevsky Cathedral", landmark_name_i18n: { bg: "Александър Невски" }, rating: 5 },
+  { position: 1, landmark_name: "Sofia University", landmark_name_i18n: {}, rating: null },
 ];
 
 it("lets this phone rate each completed riddle after the game (issue #51)", () => {
   const onRate = vi.fn();
   render(<FinishScreen state={makeState({ status: "finished", phase: "results", clock: null, task: null, results: { ...results, riddles } })}
                        frame={frame} onRate={onRate} />);
-  fireEvent.click(within(screen.getByRole("radiogroup", { name: "Rate Sofia University" })).getByRole("radio", { name: "3 stars" }));
+  fireEvent.click(within(screen.getByRole("radiogroup", { name: "Rate 2. Sofia University" })).getByRole("radio", { name: "3 stars" }));
   expect(onRate).toHaveBeenCalledWith(1, 3);
-  expect(within(screen.getByRole("radiogroup", { name: "Rate Alexander Nevsky Cathedral" })).getByRole("radio", { name: "5 stars" })).toBeChecked();
+  expect(within(screen.getByRole("radiogroup", { name: "Rate 1. Alexander Nevsky Cathedral" })).getByRole("radio", { name: "5 stars" })).toBeChecked();
 });
 
 it("renders the riddle names in the team's language", () => {

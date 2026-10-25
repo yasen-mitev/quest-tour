@@ -29,10 +29,10 @@ it("shows the window-closed copy", () => {
 
 it("lists only the solved riddles for rating and reports the tapped position (issue #51)", () => {
   const onRate = vi.fn();
-  const riddles = [{ position: 0, number: 1, completion: "answered" as const, landmark_name: "Sofia University", landmark_name_i18n: {}, rating: null }];
+  const riddles = [{ position: 0, landmark_name: "Sofia University", landmark_name_i18n: {}, rating: null }];
   render(<TimesUpScreen state={makeState({ status: "timed_out", phase: "results", clock: null, task: null, results: { ...results("max_duration"), riddles } })}
                         frame={frame} onRate={onRate} />);
   expect(screen.getAllByRole("radiogroup")).toHaveLength(1);
-  fireEvent.click(within(screen.getByRole("radiogroup", { name: "Rate Sofia University" })).getByRole("radio", { name: "4 stars" }));
+  fireEvent.click(within(screen.getByRole("radiogroup", { name: "Rate 1. Sofia University" })).getByRole("radio", { name: "4 stars" }));
   expect(onRate).toHaveBeenCalledWith(0, 4);
 });
