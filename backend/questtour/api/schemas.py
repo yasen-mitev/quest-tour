@@ -82,6 +82,13 @@ class LeaderboardRowOut(BaseModel):
     is_you: bool
 
 
+class RiddleRatingOut(BaseModel):
+    position: int
+    landmark_name: str
+    landmark_name_i18n: dict[str, str]
+    rating: int | None  # this phone's stars (issue #51)
+
+
 class ResultsOut(BaseModel):
     elapsed_seconds: int
     hints_used: int
@@ -98,6 +105,7 @@ class ResultsOut(BaseModel):
     average_rating: float | None  # the team's average over its riddle ratings (issue #38)
     ratings_count: int
     feedback_submitted: bool  # this phone has sent its word for the host
+    riddles: list[RiddleRatingOut]  # every completed riddle, for rating after the game (issue #51)
 
 
 class GameState(BaseModel):

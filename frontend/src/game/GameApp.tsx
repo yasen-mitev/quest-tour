@@ -53,7 +53,8 @@ export function GameApp({ token }: { token: string }) {
   };
   const ack = () => setUi((u) => ({ ...u, ackedPosition: position }));
   const albumUrl = `/album/${encodeURIComponent(token)}`;   // the memories album (issue #33) uses the same link
-  const rate = (stars: number) => void game.act(() => api.rate(token, position, stars));   // issue #38
+  const rateAt = (at: number, stars: number) => void game.act(() => api.rate(token, at, stars));   // issues #38, #51
+  const rate = (stars: number) => rateAt(position, stars);
   const feedback = (text: string) => game.act(() => api.feedback(token, text));
 
   const screen = renderScreen();
@@ -98,9 +99,9 @@ export function GameApp({ token }: { token: string }) {
         return <LandmarkScreen state={state} frame={frame} language={language}
                                onNext={() => game.act(() => api.advance(token, position))} />;
       case "finish":
-        return <FinishScreen state={state} frame={frame} albumUrl={albumUrl} onFeedback={feedback} />;
+        return <FinishScreen state={state} frame={frame} albumUrl={albumUrl} language={language} onFeedback={feedback} onRate={rateAt} />;
       case "timesup":
-        return <TimesUpScreen state={state} frame={frame} albumUrl={albumUrl} onFeedback={feedback} />;
+        return <TimesUpScreen state={state} frame={frame} albumUrl={albumUrl} language={language} onFeedback={feedback} onRate={rateAt} />;
     }
   }
 }

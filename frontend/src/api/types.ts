@@ -19,6 +19,11 @@ export interface GameInfo {
   available_languages: string[];
 }
 export interface LeaderboardRow { rank: number; team_name: string; total_seconds: number; hints_used: number; is_you: boolean; }
+export interface RiddleRatingRow {
+  position: number;
+  landmark_name: string; landmark_name_i18n: Record<string, string>;
+  rating: number | null;          // this phone's stars (issue #51)
+}
 export interface Results {
   elapsed_seconds: number; hints_used: number; hint_penalty_minutes: number; reveals_used: number;
   reveal_penalty_minutes: number; total_seconds: number | null; rank: number | null; shared_rank: boolean;
@@ -27,6 +32,7 @@ export interface Results {
   average_rating: number | null;  // the team's average over its riddle ratings (issue #38), null without any
   ratings_count: number;
   feedback_submitted: boolean;    // the team's closing comment has been sent
+  riddles: RiddleRatingRow[];     // every completed riddle with this phone's stars (issue #51)
 }
 export interface GameState {
   version: number; service: boolean; status: Status; phase: Phase | null; position: number; game: GameInfo; team: { name: string };

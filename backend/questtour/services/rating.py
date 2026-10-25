@@ -49,6 +49,18 @@ def device_rating(session: Session, task: RunTask, device_id: str | None) -> int
     )
 
 
+def device_ratings(session: Session, run: GameRun, device_id: str | None) -> dict[int, int]:
+    """{run_task_id: stars} for this phone over the whole run (one query, not one per riddle)."""
+    if device_id is None:
+        return {}
+    rows = session.execute(
+        select(RiddleRating.run_task_id, RiddleRating.stars)
+        .join(RunTask, RiddleRating.run_task_id == RunTask.id)
+        .where(RunTask.run_id == run.id, RiddleRating.device_id == device_id)
+    )
+    return {task_id: stars for task_id, stars in rows}
+
+
 def run_average(session: Session, run: GameRun) -> tuple[float | None, int]:
     """(average, count) over every rating of the run's tasks, from every phone."""
     row = session.execute(
