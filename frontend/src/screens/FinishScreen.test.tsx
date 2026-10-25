@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import type { RiddleRatingRow } from "../api/types";
 import { makeState } from "../test/fixtures";
 import { FinishScreen } from "./FinishScreen";
 
@@ -6,13 +7,33 @@ const frame = { header: null, offline: false, notice: null, onNoticeDone: () => 
 const results = {
   elapsed_seconds: 8610, hints_used: 3, hint_penalty_minutes: 35, reveals_used: 0, reveal_penalty_minutes: 0,
   total_seconds: 10710, rank: 2, shared_rank: true, tasks_completed: 8, end_reason: "finished" as const,
-  exit_message: "Thank you for exploring Sofia with us!", average_rating: 4.2, ratings_count: 6, feedback_submitted: false,
+  exit_message: "Thank you for exploring Sofia with us!", average_rating: 4.2, ratings_count: 6, feedback_submitted: false, riddles: [],
   leaderboard: [
     { rank: 1, team_name: "Night Owls", total_seconds: 9665, hints_used: 1, is_you: false },
     { rank: 2, team_name: "The Explorers", total_seconds: 10710, hints_used: 3, is_you: true },
     { rank: 2, team_name: "Map Breakers", total_seconds: 10710, hints_used: 2, is_you: false },
   ],
 };
+
+const riddles: RiddleRatingRow[] = [
+  { position: 0, number: 1, completion: "answered" as const, landmark_name: "Alexander Nevsky Cathedral", landmark_name_i18n: { bg: "Александър Невски" }, rating: 5 },
+  { position: 1, number: 2, completion: "revealed" as const, landmark_name: "Sofia University", landmark_name_i18n: {}, rating: null },
+];
+
+it("lets this phone rate each completed riddle after the game (issue #51)", () => {
+  const onRate = vi.fn();
+  render(<FinishScreen state={makeState({ status: "finished", phase: "results", clock: null, task: null, results: { ...results, riddles } })}
+                       frame={frame} onRate={onRate} />);
+  fireEvent.click(within(screen.getByRole("radiogroup", { name: "Rate Sofia University" })).getByRole("radio", { name: "3 stars" }));
+  expect(onRate).toHaveBeenCalledWith(1, 3);
+  expect(within(screen.getByRole("radiogroup", { name: "Rate Alexander Nevsky Cathedral" })).getByRole("radio", { name: "5 stars" })).toBeChecked();
+});
+
+it("renders the riddle names in the team's language", () => {
+  render(<FinishScreen state={makeState({ status: "finished", phase: "results", clock: null, task: null, results: { ...results, riddles } })}
+                       frame={frame} language="bg" />);
+  expect(screen.getByText("Александър Невски")).toBeInTheDocument();
+});
 
 it("shows the shared place, the breakdown, the highlighted row and the host message", () => {
   const { container } = render(<FinishScreen state={makeState({ status: "finished", phase: "results", clock: null, task: null, results })} frame={frame} />);

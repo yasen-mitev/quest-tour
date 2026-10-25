@@ -123,6 +123,11 @@
 .qs-rate__star.is-on { color: var(--gold-500); }
 .qs-rate__star:active { transform: scale(1.15); }
 .qs-rate__star:focus-visible { outline: 3px solid var(--focus); outline-offset: -2px; }
+.qs-rate-list__items { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.qs-rate-list__row { display: grid; gap: var(--space-1); justify-items: start; }
+.qs-rate-list__name { font-weight: 600; }
+.qs-rate-list .qs-rate__star { width: 40px; height: 44px; }
+.qs-rate-list .qs-rate__star svg { width: 28px; height: 28px; }
 .qs-rate__word { min-height: 20px; }
 .qs-rate__stars--static .qs-rate__star { width: 28px; height: 28px; cursor: default; position: relative; color: var(--line); }
 .qs-rate__stars--static .qs-rate__star svg { width: 26px; height: 26px; }

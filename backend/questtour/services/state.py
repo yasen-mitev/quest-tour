@@ -12,6 +12,7 @@ from questtour.api.schemas import (
     HintOut,
     LandmarkOut,
     ResultsOut,
+    RiddleRatingOut,
     TaskOut,
     TeamOut,
 )
@@ -36,7 +37,12 @@ from questtour.services.game import (
 )
 from questtour.services.i18n import pick_text
 from questtour.services.leaderboard import leaderboard_rows
-from questtour.services.rating import device_rating, feedback_submitted, run_average
+from questtour.services.rating import (
+    device_rating,
+    device_ratings,
+    feedback_submitted,
+    run_average,
+)
 
 
 def image_url(blob_name: str | None) -> str | None:
@@ -191,6 +197,24 @@ def build_task(
     )
 
 
+def build_riddle_ratings(
+    session: Session, run: GameRun, device_id: str | None
+) -> list[RiddleRatingOut]:
+    mine = device_ratings(session, run, device_id)
+    return [
+        RiddleRatingOut(
+            position=t.position,
+            number=t.position + 1,
+            completion=t.completion,
+            landmark_name=t.landmark.name,
+            landmark_name_i18n=t.landmark.name_i18n or {},
+            rating=mine.get(t.id),
+        )
+        for t in run.tasks
+        if t.completed_at is not None
+    ]
+
+
 def build_results(
     session: Session,
     run: GameRun,
@@ -217,6 +241,7 @@ def build_results(
         average_rating=average,
         ratings_count=count,
         feedback_submitted=feedback_submitted(session, run, device_id),
+        riddles=build_riddle_ratings(session, run, device_id),
     )
 
 

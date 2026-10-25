@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { makeState } from "../test/fixtures";
 import { TimesUpScreen } from "./TimesUpScreen";
 
@@ -6,7 +6,7 @@ const frame = { header: null, offline: false, notice: null, onNoticeDone: () => 
 const results = (end_reason: "max_duration" | "window_closed") => ({
   elapsed_seconds: 14400, hints_used: 0, hint_penalty_minutes: 0, reveals_used: 0, reveal_penalty_minutes: 0,
   total_seconds: null, rank: null, shared_rank: false, tasks_completed: 5, end_reason,
-  exit_message: "Thank you!", average_rating: null, ratings_count: 0, feedback_submitted: false,
+  exit_message: "Thank you!", average_rating: null, ratings_count: 0, feedback_submitted: false, riddles: [],
   leaderboard: [{ rank: 1, team_name: "Night Owls", total_seconds: 9665, hints_used: 1, is_you: false }],
 });
 const state = (reason: "max_duration" | "window_closed") =>
@@ -25,4 +25,14 @@ it("shows progress and the max-duration copy, and the team is not on the board",
 it("shows the window-closed copy", () => {
   render(<TimesUpScreen state={state("window_closed")} frame={frame} />);
   expect(screen.getByText("Thanks for playing. The time window for this game has closed.")).toBeInTheDocument();
+});
+
+it("lists only the solved riddles for rating and reports the tapped position (issue #51)", () => {
+  const onRate = vi.fn();
+  const riddles = [{ position: 0, number: 1, completion: "answered" as const, landmark_name: "Sofia University", landmark_name_i18n: {}, rating: null }];
+  render(<TimesUpScreen state={makeState({ status: "timed_out", phase: "results", clock: null, task: null, results: { ...results("max_duration"), riddles } })}
+                        frame={frame} onRate={onRate} />);
+  expect(screen.getAllByRole("radiogroup")).toHaveLength(1);
+  fireEvent.click(within(screen.getByRole("radiogroup", { name: "Rate Sofia University" })).getByRole("radio", { name: "4 stars" }));
+  expect(onRate).toHaveBeenCalledWith(0, 4);
 });

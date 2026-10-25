@@ -85,6 +85,48 @@ def test_results_without_ratings_have_no_average(client, seed, clock):
     assert results["average_rating"] is None and results["ratings_count"] == 0
 
 
+def test_results_list_completed_riddles_with_this_phones_rating(client, seed, clock):
+    t = seed.token
+    client.post(f"/api/play/{t}/start")
+    clock.advance(minutes=10)
+    play(client, t, "answer", position=0, answer=ANSWERS[0])
+    upload(client, t, 0)
+    play(client, t, "advance", position=0)
+    play(client, t, "rate", position=0, stars=4)
+    play(client, t, "rate", headers=PHONE_B, position=0, stars=2)
+    clock.advance(hours=8)  # past the max duration -> timed out
+    results = client.get(f"/api/play/{t}").json()["results"]
+    assert [r["position"] for r in results["riddles"]] == [0]  # unsolved riddles are not listed
+    assert results["riddles"][0]["rating"] == 4  # this phone's own stars
+    assert results["riddles"][0]["landmark_name"]
+    other = client.get(f"/api/play/{t}", headers=PHONE_B).json()["results"]
+    assert other["riddles"][0]["rating"] == 2
+
+
+def test_rating_after_the_game_updates_average_without_version_bump(client, seed, clock):
+    t = seed.token
+    finish(client, t, clock)
+    before = client.get(f"/api/play/{t}").json()
+    assert all(r["rating"] is None for r in before["results"]["riddles"])
+    assert len(before["results"]["riddles"]) == len(ANSWERS)
+    r = play(client, t, "rate", position=1, stars=5)
+    assert r["outcome"] == "ok" and r["state"]["version"] == before["version"]
+    assert r["state"]["results"]["riddles"][1]["rating"] == 5
+    assert r["state"]["results"]["average_rating"] == 5.0
+    assert r["state"]["results"]["ratings_count"] == 1
+    r = play(client, t, "rate", position=1, stars=3)  # changeable
+    assert r["state"]["results"]["average_rating"] == 3.0
+    assert r["state"]["results"]["ratings_count"] == 1
+
+
+def test_unsolved_riddle_cannot_be_rated_after_timeout(client, seed, clock):
+    t = seed.token
+    client.post(f"/api/play/{t}/start")
+    clock.advance(hours=8)
+    client.get(f"/api/play/{t}")  # applies the time limit
+    assert play(client, t, "rate", position=0, stars=5)["outcome"] == "stale"
+
+
 def test_feedback_only_after_the_game_one_per_phone(client, seed, clock):
     t = seed.token
     client.post(f"/api/play/{t}/start")

@@ -7,11 +7,13 @@ import { Icon } from "../components/Icon";
 import { Leaderboard } from "../components/Leaderboard";
 import { Paragraphs } from "../components/Paragraphs";
 import { TeamFeedback } from "../components/TeamFeedback";
+import { RiddleRatings } from "../components/RiddleRatings";
 import { Toast } from "../components/Toast";
 import { formatHms, formatPenalty, ordinal } from "../lib/format";
 
-export function FinishScreen({ state, frame, albumUrl, onFeedback = () => {} }: {
-  state: GameState; frame: FrameProps; albumUrl?: string; onFeedback?(text: string): Promise<unknown> | void;
+export function FinishScreen({ state, frame, albumUrl, language = "en", onFeedback = () => {}, onRate = () => {} }: {
+  state: GameState; frame: FrameProps; albumUrl?: string; language?: string;
+  onFeedback?(text: string): Promise<unknown> | void; onRate?(position: number, stars: number): void;
 }) {
   const results = state.results!;
   const { game, team } = state;
@@ -49,6 +51,7 @@ export function FinishScreen({ state, frame, albumUrl, onFeedback = () => {} }: 
             <p className="qs-eyebrow qs-eyebrow--gold" id="host-label"><Icon name="gift" />From your host</p>
             <Paragraphs text={results.exit_message} />
           </section>
+          <RiddleRatings riddles={results.riddles} language={language} onRate={onRate} />
           <TeamFeedback results={results} onFeedback={onFeedback} />
           {albumUrl && (
             <a className="qc-btn qc-btn--primary qc-btn--block" href={albumUrl}>
