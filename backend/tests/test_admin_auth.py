@@ -184,6 +184,11 @@ def test_dev_magic_verify_rejects_consumed_or_wrong_email(auth_client):
     assert second_resp.status_code == 400
 
 
+def test_provider_endpoint_reports_configured_provider(auth_client, entra_client):
+    assert auth_client.get("/api/admin/auth/provider").json() == {"provider": "dev"}
+    assert entra_client.get("/api/admin/auth/provider").json() == {"provider": "entra"}
+
+
 def test_dev_magic_endpoints_return_404_when_provider_is_entra(entra_client):
     request_resp = entra_client.post(
         "/api/admin/auth/magic/request", json={"email": "admin@example.com"}

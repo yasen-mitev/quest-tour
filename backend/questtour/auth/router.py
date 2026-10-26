@@ -22,6 +22,12 @@ class MagicRequest(BaseModel):
     email: EmailStr
 
 
+@auth_router.get("/api/admin/auth/provider")
+def admin_auth_provider(settings: Annotated[Settings, Depends(_settings)]):
+    """Tells the login screen which sign-in to offer: Entra redirect or dev magic link."""
+    return {"provider": settings.admin_auth_provider}
+
+
 @auth_router.get("/api/admin/auth/login")
 async def admin_login(
     request: Request,
