@@ -121,6 +121,8 @@ async function adminRequest<T>(
 }
 
 export const adminApi = {
+  authProvider: () =>
+    adminRequest<{ provider: "entra" | "dev" }>("/api/admin/auth/provider", undefined, "GET"),
   requestMagicLink: (email: string) =>
     adminRequest<{ url: string }>("/api/admin/auth/magic/request", { email }, "POST"),
   logout: () => adminRequest<{ ok: boolean }>("/api/admin/auth/logout", {}, "POST"),

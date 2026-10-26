@@ -1,7 +1,45 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { adminApi } from "../api";
 
+type Provider = "entra" | "dev";
+
 export function LoginScreen() {
+  const [provider, setProvider] = useState<Provider | null>(null);
+  const [providerError, setProviderError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    adminApi
+      .authProvider()
+      .then((res) => {
+        if (!cancelled) setProvider(res.provider);
+      })
+      .catch(() => {
+        if (!cancelled) setProviderError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div className="admin-login">
+      <h1 className="t-title">Admin sign-in</h1>
+      {provider === "entra" && (
+        // Full-page navigation: the server redirects to Microsoft and back to /admin.
+        <a className="qc-btn qc-btn--primary" href="/api/admin/auth/login">
+          Sign in with Microsoft
+        </a>
+      )}
+      {provider === "dev" && <MagicLinkForm />}
+      {providerError && (
+        <p className="qc-field__error">Could not load the sign-in options. Please reload the page.</p>
+      )}
+    </div>
+  );
+}
+
+function MagicLinkForm() {
   const [email, setEmail] = useState("");
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -19,8 +57,7 @@ export function LoginScreen() {
   };
 
   return (
-    <div className="admin-login">
-      <h1 className="t-title">Admin sign-in</h1>
+    <>
       <form onSubmit={submit}>
         <label className="qc-field">
           <span className="qc-field__label">Email</span>
@@ -45,6 +82,6 @@ export function LoginScreen() {
         </div>
       )}
       {error && <p className="qc-field__error">{error}</p>}
-    </div>
+    </>
   );
 }

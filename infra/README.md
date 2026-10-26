@@ -109,6 +109,8 @@ The admin panel at `/admin` signs in through Microsoft Entra. Prerequisites outs
 
 Then wire the values into GitHub (see §4) and run Infra `plan` → `apply`. The apply sets
 `ADMIN_AUTH_PROVIDER=entra` and the related app settings, and App Service restarts with them.
+The login screen asks `/api/admin/auth/provider` which sign-in to offer and shows **Sign in with
+Microsoft**; membership of the group (direct or nested) is checked on the callback.
 
 ## 3.2 Admin panel (developer sign-in, optional)
 

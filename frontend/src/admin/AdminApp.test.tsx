@@ -7,6 +7,7 @@ import { adminApi } from "./api";
 
 vi.mock("./api", () => ({
   adminApi: {
+    authProvider: vi.fn(),
     requestMagicLink: vi.fn(),
     seedError: vi.fn().mockResolvedValue({ error: null }),
     landmarks: vi.fn().mockResolvedValue([]),
@@ -20,6 +21,7 @@ vi.mock("./api", () => ({
 describe("AdminApp", () => {
   beforeEach(() => {
     vi.mocked(adminApi.requestMagicLink).mockReset();
+    vi.mocked(adminApi.authProvider).mockReset().mockResolvedValue({ provider: "dev" });
   });
 
   describe("routing", () => {
@@ -36,10 +38,10 @@ describe("AdminApp", () => {
       expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
     });
 
-    it("renders the login screen for /admin/login", () => {
+    it("renders the login screen for /admin/login", async () => {
       render(<AdminApp path="/admin/login" />);
       expect(screen.getByRole("heading", { name: "Admin sign-in" })).toBeInTheDocument();
-      expect(screen.getByLabelText("Email")).toBeInTheDocument();
+      expect(await screen.findByLabelText("Email")).toBeInTheDocument();
     });
 
     it("highlights the active navigation link", async () => {
@@ -79,7 +81,7 @@ describe("AdminApp", () => {
       });
 
       render(<AdminApp path="/admin/login" />);
-      await user.type(screen.getByLabelText("Email"), "a@b.c");
+      await user.type(await screen.findByLabelText("Email"), "a@b.c");
       await user.click(screen.getByRole("button", { name: "Request magic link" }));
 
       await waitFor(() => {
@@ -88,6 +90,28 @@ describe("AdminApp", () => {
         ).toBeInTheDocument();
       });
       expect(adminApi.requestMagicLink).toHaveBeenCalledWith("a@b.c");
+    });
+  });
+
+  describe("Entra login", () => {
+    it("offers Microsoft sign-in instead of the magic link form", async () => {
+      vi.mocked(adminApi.authProvider).mockResolvedValueOnce({ provider: "entra" });
+
+      render(<AdminApp path="/admin/login" />);
+
+      const link = await screen.findByRole("link", { name: "Sign in with Microsoft" });
+      expect(link).toHaveAttribute("href", "/api/admin/auth/login");
+      expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
+      expect(adminApi.requestMagicLink).not.toHaveBeenCalled();
+    });
+
+    it("shows an error when the provider cannot be loaded", async () => {
+      vi.mocked(adminApi.authProvider).mockRejectedValueOnce(new Error("offline"));
+
+      render(<AdminApp path="/admin/login" />);
+
+      expect(await screen.findByText(/Could not load the sign-in options/)).toBeInTheDocument();
+      expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
     });
   });
 });
