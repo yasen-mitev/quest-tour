@@ -4,8 +4,23 @@ teams:
   - id: explorers
     name: The Explorers
     participants: 4
+  - id: ping
+    name: Ping
+  - id: timeout
+    name: Timeout
 assignments:
   - team: explorers
+    game: sofia-old-town
+    valid_from: "2026-10-01T00:00:00"
+    valid_until: "2027-12-31T23:59:59"
+    exit_message: Thank you for exploring Sofia with us! Keep an eye on your inbox – a little surprise from your journey is on its way.
+    token: _zG1crvofdLR8tTikzYjGgHixZoo8l65HyxakYxI6_8
+  - team: ping
+    game: sofia-old-town
+    valid_from: "2026-10-01T00:00:00"
+    valid_until: "2027-12-31T23:59:59"
+    exit_message: Thank you for exploring Sofia with us! Keep an eye on your inbox – a little surprise from your journey is on its way.
+  - team: timeout
     game: sofia-old-town
     valid_from: "2026-10-01T00:00:00"
     valid_until: "2027-12-31T23:59:59"
@@ -14,7 +29,6 @@ assignments:
 # Service (test) team (R-25): sync-config gives it one link per game and writes the tokens below.
 # Those links ignore validity windows, max duration and reveal waiting times, can be reset from
 # the game screen, and never appear on a leaderboard. Delete this block to switch them off.
-    token: _zG1crvofdLR8tTikzYjGgHixZoo8l65HyxakYxI6_8
 service:
   team: qa-service
   name: QA Service
