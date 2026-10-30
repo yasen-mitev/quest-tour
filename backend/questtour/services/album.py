@@ -1,7 +1,7 @@
 """The memories album (issue #33): everything a finished run collected, in reading order.
 
-One chapter per task the team completed – the landmark, its story and every photo the team took
-there – plus the facts of the day. Available only once the run has ended (finished or timed out):
+One chapter per task the team completed – the landmark, its story, how long the riddle took and
+every photo the team took there – plus the facts of the day. Available only once the run has ended (finished or timed out):
 during the game players never see photos (R-10). Photo bytes are served by the player API through
 ``photo_url``, which checks the same things again.
 """
@@ -63,6 +63,13 @@ def build_album(
             story=task.landmark.info_text,
             story_i18n=task.landmark.info_text_i18n or {},
             reached_at=task.completed_at,
+            seconds=(
+                max(0, int((task.completed_at - task.shown_at).total_seconds()))
+                if task.shown_at is not None
+                else None
+            ),
+            hints=(task.hint1_at is not None) + (task.hint2_at is not None) + (task.compass_opened_at is not None),
+            penalty_minutes=task.hint_penalty_minutes + task.reveal_penalty_minutes,
             photos=[
                 AlbumPhotoOut(id=photo.id, url=photo_url(token, photo.id), taken_at=photo.uploaded_at)
                 for photo in photos.get(task.id, [])

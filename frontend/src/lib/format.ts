@@ -14,6 +14,15 @@ export function formatLeft(totalSeconds: number): string {
 
 export const formatPenalty = (minutes: number) => `+${minutes} min`;
 
+/** Whole minutes in words, for the album's totals line: "2 h 21 min", "1 h", "45 min". */
+export function formatHm(totalSeconds: number): string {
+  const total = Math.floor(Math.max(0, totalSeconds) / 60);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h > 0 && m > 0) return `${h} h ${m} min`;
+  return h > 0 ? `${h} h` : `${m} min`;
+}
+
 export function formatHours(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;

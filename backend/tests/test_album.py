@@ -53,8 +53,34 @@ def test_album_collects_every_chapter_and_photo_of_a_finished_run(client, seed, 
     assert first["landmark"] == "Alexander Nevsky Cathedral"
     assert first["story"].startswith("Built 1882")
     assert first["reached_at"].startswith("2026-10-14T08:10")
+    assert (first["seconds"], first["hints"], first["penalty_minutes"]) == (10 * 60, 0, 0)
     assert [p["taken_at"][11:16] for p in first["photos"]] == ["08:11", "08:12"]
     assert first["photos"][0]["url"] == f"/api/play/{t}/photos/{first['photos'][0]['id']}"
+
+
+def test_album_chapters_tell_how_long_each_riddle_took_and_what_it_cost(client, seed, clock):
+    t = seed.token
+    client.post(f"/api/play/{t}/start")
+    clock.advance(minutes=3)
+    play(client, t, "hint", position=0, hint=1)  # +10 min (R-4)
+    clock.advance(minutes=9)
+    play(client, t, "answer", position=0, answer=ANSWERS[0])
+    upload(client, t, 0)
+    clock.advance(minutes=7)  # a long photo break: 2 min past the 5-minute grace (issue #49)
+    play(client, t, "advance", position=0)
+    for position in (1, 2):
+        clock.advance(minutes=5)
+        play(client, t, "answer", position=position, answer=ANSWERS[position])
+        upload(client, t, position)
+        play(client, t, "advance", position=position)
+    album = client.get(f"/api/play/{t}/album").json()
+    # riddle time runs from shown to solved, so the break and the penalty are not in `seconds`
+    assert [(c["seconds"], c["hints"], c["penalty_minutes"]) for c in album["chapters"]] == [
+        (12 * 60, 1, 10),
+        (5 * 60, 0, 0),
+        (5 * 60, 0, 0),
+    ]
+    assert album["total_seconds"] == (22 + 10 + 2) * 60  # riddles + hint + the break past its grace
 
 
 def test_album_photos_are_served_only_for_the_teams_own_live_photos(

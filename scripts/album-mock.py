@@ -15,18 +15,24 @@ landmarks = {lm["id"]: lm for lm in landmarks_cfg["landmarks"]}
 game = yaml.safe_load(Path(sys.argv[2]).read_text(encoding="utf-8"))["games"][0]
 order = game["tasks"]
 
-# A Saturday morning walk: start 10:30 Sofia time (UTC+3 in October), 20–35 minutes per landmark.
+# A Saturday morning walk: start 10:30 Sofia time (UTC+3 in October), 20–35 minutes per landmark, of which
+# a 5-minute photo break (within the grace, issue #49) precedes every riddle but the first. One hint at the
+# third landmark (+10 min) and a compass at the sixth (+5 min).
 start = datetime(2026, 10, 3, 7, 30, tzinfo=UTC)
 gaps = [28, 24, 35, 31, 22, 26]
 photo_counts = [1, 2, 1, 3, 1, 2]
+hints = [0, 0, 1, 0, 0, 1]
+penalties = [0, 0, 10, 0, 0, 5]
 
 chapters = []
 t = start
 photo_id = 0
 for i, lm_id in enumerate(order):
     lm = landmarks[lm_id]
-    t = t + timedelta(minutes=gaps[i % len(gaps)])
+    gap = gaps[i % len(gaps)]
+    t = t + timedelta(minutes=gap)
     reached = t
+    riddle_minutes = gap if i == 0 else gap - 5
     photos = []
     for p in range(photo_counts[i % len(photo_counts)]):
         photo_id += 1
@@ -43,6 +49,9 @@ for i, lm_id in enumerate(order):
         "story": lm["tourist_info"].strip(),
         "story_i18n": {code: text.strip() for code, text in (lm.get("tourist_info_i18n") or {}).items()},
         "reached_at": reached.isoformat().replace("+00:00", "Z"),
+        "seconds": riddle_minutes * 60,
+        "hints": hints[i % len(hints)],
+        "penalty_minutes": penalties[i % len(penalties)],
         "photos": photos,
     })
 
@@ -55,7 +64,8 @@ album = {
     "ended_at": end.isoformat().replace("+00:00", "Z"),
     "end_reason": "finished",
     "task_count": len(order),
-    "total_seconds": int((end - start).total_seconds()) + 25 * 60,
+    # R-7: riddle time + penalties; the photo breaks were all within the grace, so they cost nothing
+    "total_seconds": sum(c["seconds"] for c in chapters) + 60 * sum(c["penalty_minutes"] for c in chapters),
     "rank": 2,
     "shared_rank": False,
     "host_message": "Thank you for exploring Sofia with us! Here is your journey, landmark by landmark – the "
