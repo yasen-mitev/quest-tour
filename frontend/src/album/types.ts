@@ -15,6 +15,9 @@ export interface AlbumChapter {
   story: string;               // the landmark's tourist info, paragraphs separated by blank lines
   story_i18n: Record<string, string>;
   reached_at: string;          // when the team completed the task (ISO-8601, UTC)
+  seconds: number | null;      // riddle time, shown → solved (breaks between riddles excluded); null if never shown
+  hints: number;               // hints and compasses opened on this riddle (R-12)
+  penalty_minutes: number;     // hint, compass and reveal minutes charged on this riddle
   photos: AlbumPhoto[];
 }
 

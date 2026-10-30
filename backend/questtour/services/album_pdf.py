@@ -2,7 +2,8 @@
 
 A patina cover with the facts of the day and the host's message, one page per landmark reached
 (the team photo, further photos in a row, the story in two columns of small print), and a closing
-summary page whose remaining height is a collage of every photo. Set in Onest (OFL, bundled under
+summary page – the route with each riddle's minutes and a totals line – whose remaining height is a
+collage of every photo. Set in Onest (OFL, bundled under
 assets/fonts), so Cyrillic and Latin-extended text renders. Photos are decoded with Pillow (HEIC
 included), cropped to their box, downscaled and re-encoded as JPEG so an album with ten 20 MB
 originals stays a few megabytes.
@@ -61,6 +62,14 @@ def _hms(seconds: int) -> str:
     h, rest = divmod(seconds, 3600)
     m, s = divmod(rest, 60)
     return f"{h:02d}:{m:02d}:{s:02d}"
+
+
+def _hm(seconds: int) -> str:
+    """Whole minutes in words: '2 h 21 min', '1 h', '45 min' (the totals line; seconds would be noise)."""
+    h, m = divmod(seconds // 60, 60)
+    if h and m:
+        return f"{h} h {m} min"
+    return f"{h} h" if h else f"{m} min"
 
 
 def _ordinal(n: int) -> str:
@@ -260,6 +269,88 @@ class _AlbumPDF(FPDF):
                 with cols.paragraph(bottom_margin=3 if i else 0) as par:
                     par.write(" ".join(paragraph.split()))
 
+    def fit(self, text: str, width: float) -> str:
+        """`text` in the current font, shortened with an ellipsis if it would overflow `width`."""
+        if self.get_string_width(text) <= width:
+            return text
+        while text and self.get_string_width(text + "…") > width:
+            text = text[:-1].rstrip()
+        return text + "…"
+
+    def route(self, y: float) -> float:
+        """The route in two columns, reading across: number, landmark, a gold dot per hint, the riddle's
+        minutes and the time the team got there. Returns the y below the table."""
+        a = self.album
+        half = (CONTENT_W - 8) / 2
+        row_h = 6.5
+        rows = math.ceil(len(a.chapters) / 2)
+        self.set_draw_color(*LINE)
+        for i, chapter in enumerate(a.chapters):
+            col, row = i % 2, i // 2
+            x = MARGIN + col * (half + 8)
+            ry = y + row * row_h
+            self.line(x, ry, x + half, ry)
+            self.set_font("Onest", "", 7.5)
+            self.set_text_color(*INK_MUTED)
+            self.set_xy(x, ry)
+            self.cell(6, row_h, str(chapter.number))
+            minutes = "" if chapter.seconds is None else f"{chapter.seconds // 60} min"
+            self.set_font("Onest", "B", 8)
+            minutes_w = self.get_string_width(minutes) + 2 if minutes else 0
+            dots_w = 2.2 * chapter.hints
+            name_w = half - 6 - 11 - minutes_w - dots_w
+            self.set_text_color(*INK)
+            self.cell(name_w, row_h, self.fit(chapter.landmark, name_w - 1))
+            self.set_fill_color(*GOLD_500)
+            for n in range(chapter.hints):
+                self.ellipse(self.get_x() + 0.4 + 2.2 * n, ry + row_h / 2 - 0.65, 1.3, 1.3, style="F")
+            self.set_x(self.get_x() + dots_w)
+            self.set_text_color(*PATINA_600)
+            self.cell(minutes_w, row_h, minutes, align="R")
+            self.set_font("Onest", "", 7.5)
+            self.set_text_color(*INK_MUTED)
+            self.cell(11, row_h, f"{_local(chapter.reached_at, a.time_zone):%H:%M}", align="R")
+        for col in range(min(2, len(a.chapters))):
+            x = MARGIN + col * (half + 8)
+            self.line(x, y + rows * row_h, x + half, y + rows * row_h)
+        return y + rows * row_h
+
+    def totals(self, y: float) -> float:
+        """One centred line: riddle minutes, penalty minutes, long breaks and the time on the clock, which
+        add up to the total in the facts. Returns the y below the line (unchanged if there is nothing)."""
+        a = self.album
+        timed = [c.seconds for c in a.chapters if c.seconds is not None]
+        if not timed:
+            return y
+        riddles = sum(timed)
+        penalties = sum(c.penalty_minutes for c in a.chapters)
+        parts: list[tuple[str, str]] = [("Riddles ", _hm(riddles))]
+        if penalties:
+            parts.append(("Hints and reveals ", f"+{penalties} min"))
+        if a.total_seconds is not None:
+            breaks = a.total_seconds - riddles - 60 * penalties   # pauses past the 5-minute grace (issue #49)
+            if breaks >= 60:
+                parts.append(("Long breaks ", f"+{_hm(breaks)}"))
+            parts.append(("On the clock ", _hm(a.total_seconds)))
+        sep = "   ·   "
+        width = 0.0
+        for i, (label, value) in enumerate(parts):
+            self.set_font("Onest", "", 7.5)
+            width += self.get_string_width(label) + (self.get_string_width(sep) if i else 0)
+            self.set_font("Onest", "B", 7.5)
+            width += self.get_string_width(value)
+        self.set_xy(MARGIN + (CONTENT_W - width) / 2, y + 2)
+        for i, (label, value) in enumerate(parts):
+            self.set_font("Onest", "", 7.5)
+            self.set_text_color(*INK_MUTED)
+            if i:
+                self.cell(self.get_string_width(sep), 5, sep)
+            self.cell(self.get_string_width(label), 5, label)
+            self.set_font("Onest", "B", 7.5)
+            self.set_text_color(*INK)
+            self.cell(self.get_string_width(value), 5, value)
+        return y + 7
+
     def closing(self, images: Images) -> None:
         a = self.album
         self.add_page()
@@ -280,29 +371,8 @@ class _AlbumPDF(FPDF):
         self.set_text_color(*GOLD_700)
         self.cell(CONTENT_W, 7, "   ·   ".join(_facts(a)), align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         y = self.get_y() + 2
-        # The route in two columns
-        half = (CONTENT_W - 8) / 2
-        rows = math.ceil(len(a.chapters) / 2)
-        self.set_draw_color(*LINE)
-        for i, chapter in enumerate(a.chapters):
-            col, row = i % 2 if rows else 0, i // 2
-            x = MARGIN + col * (half + 8)
-            ry = y + row * 6.5
-            self.line(x, ry, x + half, ry)
-            self.set_font("Onest", "", 7.5)
-            self.set_text_color(*INK_MUTED)
-            self.set_xy(x, ry)
-            self.cell(6, 6.5, str(chapter.number))
-            self.set_font("Onest", "B", 8)
-            self.set_text_color(*INK)
-            self.cell(half - 20, 6.5, chapter.landmark)
-            self.set_font("Onest", "", 7.5)
-            self.set_text_color(*INK_MUTED)
-            self.cell(14, 6.5, f"{_local(chapter.reached_at, a.time_zone):%H:%M}", align="R")
-        for col in range(min(2, len(a.chapters))):
-            x = MARGIN + col * (half + 8)
-            self.line(x, y + rows * 6.5, x + half, y + rows * 6.5)
-        y += rows * 6.5 + 6
+        y = self.route(y)
+        y = self.totals(y) + 4
         # The collage fills the rest of the page: three tiles per row, a lone last photo across the row
         photos = [(photo, chapter) for chapter in a.chapters for photo in chapter.photos]
         if not photos:

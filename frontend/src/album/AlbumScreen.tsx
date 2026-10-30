@@ -4,13 +4,14 @@ import { WelcomeSkyline } from "../components/art";
 import { Icon } from "../components/Icon";
 import { LanguageToggle } from "../components/LanguageToggle";
 import { Paragraphs } from "../components/Paragraphs";
-import { formatDateFull, formatHms, formatTime, ordinal } from "../lib/format";
+import { formatDateFull, formatHm, formatHms, formatTime, ordinal } from "../lib/format";
 import { pickText } from "../lib/i18n";
 import type { Album, AlbumChapter, AlbumPhoto } from "./types";
 
 /** The team album (design draft): a keepsake the host shares after the game, laid out as an A4 document.
  *  A cover sheet (the facts of the day and the host's message), one sheet per landmark reached (the team
- *  photo and what the place is, in two columns; no riddles) and a closing sheet with every photo. On a
+ *  photo and what the place is, in two columns; no riddles) and a closing sheet with the route (minutes per
+ *  riddle, time reached), a totals line and every photo. On a
  *  desktop and in the PDF the sheets are true A4 pages; on a phone the same sheets flow as cards, because
  *  A4 type shrunk to a phone's width would not be readable. "Save as PDF" prints the A4 pages. */
 export function AlbumScreen({ album, language = "en", onLanguageChange = () => {}, pdfUrl }: {
@@ -66,11 +67,20 @@ export function AlbumScreen({ album, language = "en", onLanguageChange = () => {
               {album.chapters.map((chapter) => (
                 <li key={chapter.number}>
                   <span className="qa-route__no">{chapter.number}</span>
-                  <span className="qa-route__name">{pickText(chapter.landmark, chapter.landmark_i18n, language)}</span>
+                  <span className="qa-route__name">
+                    {pickText(chapter.landmark, chapter.landmark_i18n, language)}
+                    {chapter.hints > 0 && (
+                      <span className="qa-route__hints" role="img" aria-label={`${chapter.hints} hint${chapter.hints === 1 ? "" : "s"}`}>
+                        {Array.from({ length: chapter.hints }, (_, i) => <i key={i} />)}
+                      </span>
+                    )}
+                  </span>
+                  {chapter.seconds !== null && <span className="qa-route__min">{Math.floor(chapter.seconds / 60)} min</span>}
                   <span className="qa-route__time">{formatTime(chapter.reached_at, tz)}</span>
                 </li>
               ))}
             </ol>
+            <RouteTotals album={album} />
             {allPhotos.length > 0 && (
               <div className="qa-contact" aria-label="All the team's photos">
                 {allPhotos.map(({ photo, chapter }) => (
@@ -101,6 +111,27 @@ function Facts({ album, light = false }: { album: Album; light?: boolean }) {
         <li><Icon name="trophy" />{album.shared_rank ? "Shared " : ""}{ordinal(album.rank)} place</li>
       )}
     </ul>
+  );
+}
+
+/** One line under the route: riddle minutes, penalty minutes, long breaks and the time on the clock, which
+ *  add up to the total in the facts. Nothing for a run whose riddles were never timed. */
+function RouteTotals({ album }: { album: Album }) {
+  const timed = album.chapters.filter((chapter) => chapter.seconds !== null);
+  if (timed.length === 0) return null;
+  const riddles = timed.reduce((sum, chapter) => sum + (chapter.seconds ?? 0), 0);
+  const penalties = album.chapters.reduce((sum, chapter) => sum + chapter.penalty_minutes, 0);
+  const parts: [string, string][] = [["Riddles", formatHm(riddles)]];
+  if (penalties > 0) parts.push(["Hints and reveals", `+${penalties} min`]);
+  if (album.total_seconds !== null) {
+    const breaks = album.total_seconds - riddles - 60 * penalties;   // pauses past the 5-minute grace (issue #49)
+    if (breaks >= 60) parts.push(["Long breaks", `+${formatHm(breaks)}`]);
+    parts.push(["On the clock", formatHm(album.total_seconds)]);
+  }
+  return (
+    <p className="qa-route__sum" aria-label="Time in total">
+      {parts.map(([label, value]) => <span key={label}>{label} <b>{value}</b></span>)}
+    </p>
   );
 }
 

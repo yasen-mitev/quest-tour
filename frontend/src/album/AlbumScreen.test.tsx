@@ -12,10 +12,10 @@ const album: Album = {
   chapters: [
     { number: 1, landmark: "Lily Pond", landmark_i18n: { de: "Seerosenteich" },
       story: "Laid out by Daniel Neff.\n\nKnown as the Fish Pond.", story_i18n: { de: "Von Daniel Neff angelegt." },
-      reached_at: "2026-10-03T07:58:00Z",
+      reached_at: "2026-10-03T07:58:00Z", seconds: 28 * 60, hints: 0, penalty_minutes: 0,
       photos: [{ id: 1, url: "https://example.test/lily-1.jpg", taken_at: "2026-10-03T08:02:00Z" }] },
     { number: 2, landmark: "Eagles' Bridge", landmark_i18n: {}, story: "Built in 1891.", story_i18n: {},
-      reached_at: "2026-10-03T08:22:00Z",
+      reached_at: "2026-10-03T08:22:00Z", seconds: 19 * 60, hints: 1, penalty_minutes: 10,
       photos: [
         { id: 2, url: "https://example.test/bridge-1.jpg", taken_at: "2026-10-03T08:26:00Z" },
         { id: 3, url: "https://example.test/bridge-2.jpg", taken_at: "2026-10-03T08:29:00Z" },
@@ -47,7 +47,7 @@ it("tells one chapter per landmark: time reached, photos with captions and what 
   expect(within(chapter).getAllByText(/Team photo · /)).toHaveLength(3);
   expect(within(chapter).getByText("About this place")).toBeInTheDocument();
   expect(within(chapter).getByText("Built in 1891.")).toBeInTheDocument();
-  expect(screen.queryByText(/riddle/i)).not.toBeInTheDocument();
+  expect(within(chapter).queryByText(/riddle/i)).not.toBeInTheDocument();   // the end sheet counts riddle minutes
   expect(screen.getByRole("region", { name: "Lily Pond" })).toHaveTextContent("Known as the Fish Pond.");
 });
 
@@ -60,7 +60,7 @@ it("leaves out the time and the place for a run that ended unfinished", () => {
   }
 });
 
-it("ends with a summary that stands alone: the facts again and the route with times", () => {
+it("ends with a summary that stands alone: the facts again and the route with minutes and times", () => {
   render(<AlbumScreen album={album} />);
   const end = screen.getByRole("region", { name: "The end" });
   expect(within(end).getByRole("list", { name: "The day in numbers" })).toHaveTextContent("Saturday, 3 October 2026");
@@ -68,8 +68,24 @@ it("ends with a summary that stands alone: the facts again and the route with ti
   const route = within(end).getByRole("list", { name: "The route" });
   const stops = within(route).getAllByRole("listitem");
   expect(stops).toHaveLength(2);
-  expect(stops[0]).toHaveTextContent("1Lily Pond10:58");
-  expect(stops[1]).toHaveTextContent("2Eagles' Bridge11:22");
+  expect(stops[0]).toHaveTextContent("1Lily Pond28 min10:58");
+  expect(stops[1]).toHaveTextContent("2Eagles' Bridge19 min11:22");
+  expect(within(stops[0]).queryByRole("img")).not.toBeInTheDocument();
+  expect(within(stops[1]).getByRole("img", { name: "1 hint" })).toBeInTheDocument();   // a gold dot
+  // 47 min of riddles + 10 min for the hint + the breaks past their 5-minute grace = the 02:58:30 in the facts
+  const totals = within(end).getByLabelText("Time in total");
+  expect(totals).toHaveTextContent("Riddles 47 min");
+  expect(totals).toHaveTextContent("Hints and reveals +10 min");
+  expect(totals).toHaveTextContent("Long breaks +2 h 1 min");
+  expect(totals).toHaveTextContent("On the clock 2 h 58 min");
+});
+
+it("leaves out the totals line for a run whose riddles were never timed", () => {
+  const untimed = { ...album, total_seconds: null, chapters: album.chapters.map((c) => ({ ...c, seconds: null })) };
+  render(<AlbumScreen album={untimed} />);
+  const end = screen.getByRole("region", { name: "The end" });
+  expect(within(end).queryByLabelText("Time in total")).not.toBeInTheDocument();
+  expect(within(within(end).getByRole("list", { name: "The route" })).getAllByRole("listitem")[0]).toHaveTextContent("1Lily Pond10:58");
 });
 
 it("closes with a contact sheet of every photo and numbered running feet", () => {

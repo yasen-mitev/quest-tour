@@ -142,6 +142,9 @@ class AlbumChapterOut(BaseModel):
     story: str
     story_i18n: dict[str, str]
     reached_at: datetime
+    seconds: int | None  # riddle time, shown → solved (breaks between riddles excluded); None if never shown
+    hints: int  # hints and compasses opened on this riddle (R-12)
+    penalty_minutes: int  # hint, compass and reveal minutes charged on this riddle
     photos: list[AlbumPhotoOut]
 
 
