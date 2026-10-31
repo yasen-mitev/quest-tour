@@ -13,6 +13,7 @@ from questtour.admin import admin_router
 from questtour.admin.errors import register_admin_exception_handlers
 from questtour.api import health, images, play
 from questtour.auth import auth_router
+from questtour.auth.passwords import LoginThrottle, seed_auth_state
 from questtour.clock import Clock, utc_now
 from questtour.db import make_engine
 from questtour.models import Landmark
@@ -63,6 +64,16 @@ def _acquire_seed_lock(session, settings: Settings) -> None:
 async def lifespan(app: FastAPI):
     settings = app.state.settings
     app.state.seed_error = None
+    if settings.admin_auth_provider in ("password", "entra"):
+        with app.state.session_factory() as db:
+            seed_auth_state(db, settings)
+        if settings.admin_auth_provider == "entra" and not (
+            settings.admin_bootstrap_email and settings.admin_bootstrap_password
+        ):
+            log.warning(
+                "entra mode without ADMIN_BOOTSTRAP_EMAIL/PASSWORD: "
+                "password sign-in has no bootstrap admin yet"
+            )
     if settings.config_dir.is_dir():
         try:
             with app.state.session_factory() as session:  # noqa: SIM117
@@ -100,6 +111,9 @@ def create_app(
 ) -> FastAPI:
     logging.basicConfig(level=logging.INFO)
     settings = settings or get_settings()
+    problems = settings.startup_problems()
+    if problems:
+        raise RuntimeError("Admin sign-in is not configured: " + "; ".join(problems))
     app = FastAPI(
         title="Quest City Tour",
         docs_url=None,
@@ -124,6 +138,7 @@ def create_app(
     )
     app.state.blob_store = blob_store or make_blob_store(settings)
     app.state.clock = clock
+    app.state.login_throttle = LoginThrottle()
     app.include_router(auth_router)  # full /api/admin/auth/* routes
     app.include_router(admin_router)  # prefix /api/admin
     if blob_store is None:

@@ -97,9 +97,45 @@ Do these in this order. The order is forced: *Infrastructure (Terraform)* can on
    - run `uv run sync-config`;
    - commit `teams.yaml`. That push does not trigger a deploy.
 
-## 3.1 Admin panel (Entra sign-in)
+## 3.1 Admin panel sign-in
 
-The admin panel at `/admin` signs in through Microsoft Entra. Prerequisites outside this repo:
+The admin panel at `/admin` signs in with e-mail and password by default. `ADMIN_AUTH_PROVIDER` picks
+the mode:
+
+| Mode | Where | Sign-in |
+|---|---|---|
+| `dev` | local only (Python default) | magic link for `ADMIN_DEV_EMAILS` |
+| `password` | Terraform default | e-mail + password |
+| `entra` | upgraded legacy deployments | password **and** Microsoft sign-in |
+
+Set these in GitHub (see §4), then run Infra `plan` → `apply`:
+
+- variable `ADMIN_AUTH_PROVIDER` (`password` or `entra`; unset means `password`);
+- variable `ADMIN_BOOTSTRAP_EMAIL` and secret `ADMIN_BOOTSTRAP_PASSWORD` (12 characters or more);
+- secret `ADMIN_SESSION_SECRET` (as before).
+
+The bootstrap password is hashed (argon2id) into the database **on first start only**, as an admin
+user. Changing the variable later has no effect: manage passwords and further admins in Admin →
+Settings. Changing `ADMIN_BOOTSTRAP_EMAIL` later seeds an additional bootstrap admin. If you are locked
+out, see the `admin-password` entry in §8.
+
+### Upgrading an existing (Entra) deployment
+
+Do this in order:
+
+1. In GitHub, set variable `ADMIN_AUTH_PROVIDER=entra`, variable `ADMIN_BOOTSTRAP_EMAIL` and secret
+   `ADMIN_BOOTSTRAP_PASSWORD`.
+2. Deploy the code. Migration 0008 runs in `startup.sh`. The old app settings stay valid, and `entra`
+   mode tolerates the missing bootstrap credentials until step 3.
+3. Run Infra `plan` → `apply` to deliver the credentials. The app restarts, the bootstrap admin is
+   seeded, password login works and Entra stays on.
+
+Later, switch the variable to `password` and re-apply. Entra stays available as long as the
+`ADMIN_ENTRA_*` values remain set.
+
+### Enabling Entra later (optional)
+
+Entra sign-in needs, outside this repo:
 
 - An **Entra app registration** (Web platform) with redirect URI
   `https://app-<name>.azurewebsites.net/api/admin/auth/callback` (derive it from
@@ -107,22 +143,21 @@ The admin panel at `/admin` signs in through Microsoft Entra. Prerequisites outs
 - An **Entra group** whose members may use the panel; its Object ID becomes
   `ADMIN_ENTRA_GROUP_OBJECT_ID`.
 
-Then wire the values into GitHub (see §4) and run Infra `plan` → `apply`. The apply sets
-`ADMIN_AUTH_PROVIDER=entra` and the related app settings, and App Service restarts with them.
-The login screen asks `/api/admin/auth/provider` which sign-in to offer and shows **Sign in with
-Microsoft**; membership of the group (direct or nested) is checked on the callback.
+Set the `ADMIN_ENTRA_*` values in GitHub (see §4), run Infra `plan` → `apply`, then turn Entra on in
+Admin → Settings. The login screen asks `/api/admin/auth/provider` which sign-ins to offer and shows
+**Sign in with Microsoft**; membership of the group (direct or nested) is checked on the callback.
 
 ## 3.2 Admin panel (developer sign-in, optional)
 
 For a local admin panel, set `ADMIN_AUTH_PROVIDER=dev` and `ADMIN_DEV_EMAILS` in `backend/.env`
-(see `backend/.env.example`). Never set `ADMIN_AUTH_PROVIDER=dev` on App Service: the prod plan
-pins `entra`.
+(see `backend/.env.example`). The dev provider is local-only: production accepts only `password` or
+`entra`, so never set `ADMIN_AUTH_PROVIDER=dev` on App Service.
 
 ## 4. GitHub variables
 
 All are repository-scope Actions variables. Azure login is OIDC, so there are **no Azure
-secrets**; the only GitHub **secrets** are the admin panel's Entra client secret and session
-secret (see §3.1). `bootstrap.sh` sets all of them except the optional
+secrets**; the only GitHub **secrets** are the admin panel's session secret, bootstrap password and
+(optional) Entra client secret (see §3.1). `bootstrap.sh` sets all of them except the optional
 `TF_HOST_PRINCIPAL_OBJECT_IDS`, `DEPLOY_ENABLED` and the admin panel entries.
 
 | Variable | Meaning |
@@ -139,8 +174,11 @@ secret (see §3.1). `bootstrap.sh` sets all of them except the optional
 | `TF_HOST_PRINCIPAL_OBJECT_IDS` | optional JSON list of host staff object IDs (photo access) |
 | `TF_BUDGET_CONTACT_EMAILS` | JSON list of budget alert e-mail addresses |
 | `DEPLOY_ENABLED` | set by hand in first-time setup step 7. `true` lets pushes to `main` deploy; anything else pauses auto-deploys, while manual *Deploy* runs still work |
-| `ADMIN_ENTRA_TENANT_ID`, `ADMIN_ENTRA_CLIENT_ID`, `ADMIN_ENTRA_GROUP_OBJECT_ID` | admin panel: Entra tenant, app registration client ID, and the Object ID of the admin group (§3.1) |
-| `ADMIN_ENTRA_CLIENT_SECRET` | **secret**: client secret of the admin panel Entra app (§3.1) |
+| `ADMIN_AUTH_PROVIDER` | admin panel sign-in mode: `password` (default) or `entra` (§3.1) |
+| `ADMIN_BOOTSTRAP_EMAIL` | admin panel: e-mail of the first admin, seeded on first start (§3.1) |
+| `ADMIN_BOOTSTRAP_PASSWORD` | **secret**: password of the first admin, 12 characters or more (§3.1) |
+| `ADMIN_ENTRA_TENANT_ID`, `ADMIN_ENTRA_CLIENT_ID`, `ADMIN_ENTRA_GROUP_OBJECT_ID` | admin panel, optional: Entra tenant, app registration client ID, and the Object ID of the admin group (§3.1) |
+| `ADMIN_ENTRA_CLIENT_SECRET` | **secret**, optional: client secret of the admin panel Entra app (§3.1) |
 | `ADMIN_SESSION_SECRET` | **secret**: ≥32-byte random string signing admin session cookies. Generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
 
 ## 5. Budget start date
@@ -186,6 +224,15 @@ secret (see §3.1). `bootstrap.sh` sets all of them except the optional
   Contributor*, *Reader* and *Website Contributor*. It is not in `bootstrap.sh`, because the condition
   string can't be verified without `az`.
 - `backend/config/` holds live game tokens and is never part of the deploy package.
+- `ADMIN_BOOTSTRAP_PASSWORD` stays visible in the App Service settings. It only seeds the first admin;
+  change that password in the console (Admin → Settings) after the first sign-in.
+- Use a real, deliverable address for `ADMIN_BOOTSTRAP_EMAIL`. Terraform's check is laxer than the app's
+  validation: `.local` and similar addresses pass Terraform but make the app fail to start.
+- Rolling the code back below this release with `ADMIN_AUTH_PROVIDER=password` fails to start, because
+  the old code only knows `entra` and `dev`. Roll back with the variable set to `entra`, or roll
+  forward. A manual rollback dispatch of *Deploy* also needs the two bootstrap values.
+- The admin login throttle is in memory, per instance. Changing a password does not invalidate other
+  sessions of that admin.
 
 ## 8. Troubleshooting
 
@@ -212,3 +259,6 @@ secret (see §3.1). `bootstrap.sh` sets all of them except the optional
   credit-based ones) don't support Azure budgets. Set up a cost alert in the Portal instead, and remove
   the budget from the plan with `terraform state rm`, or comment `budget.tf`'s resource out.
 - **Deploy job "skipped" on a push**: `DEPLOY_ENABLED` is not `true` (first-time setup step 7).
+- **Locked out of the admin panel** (forgotten password, or the only admin is gone): from `backend/`, on
+  an admin machine with the prod `DATABASE_URL` (the same way as `sync-config`), run
+  `uv run admin-password --email you@example.com`. It sets a new password for that admin.

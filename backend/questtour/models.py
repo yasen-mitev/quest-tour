@@ -224,3 +224,23 @@ class RunDevice(Base):
     device_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     first_seen_at: Mapped[datetime] = mapped_column(UTCDateTime)
     last_seen_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class AdminUser(Base):
+    """A password admin (bootstrap admin from deployment config, plus ones added in the console)."""
+
+    __tablename__ = "admin_users"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(320), unique=True)  # stored casefolded
+    password_hash: Mapped[str] = mapped_column(String(255))
+    is_bootstrap: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utc_now, onupdate=utc_now)
+
+
+class AppSetting(Base):
+    """Small key/value store for settings the admin console owns (e.g. ``entra_enabled``)."""
+
+    __tablename__ = "app_settings"
+    key: Mapped[str] = mapped_column(String(100), primary_key=True)
+    value: Mapped[str] = mapped_column(Text)

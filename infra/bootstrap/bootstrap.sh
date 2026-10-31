@@ -7,7 +7,7 @@
 # Run once by a subscription Owner who is also an admin of the GitHub repo, after `az login` and
 # `gh auth login`. Safe to re-run: everything is get-or-create-or-update.
 #   GITHUB_REPO=owner/repo STATE_ACCOUNT=<unique> APP_NAME=<app_name> BUDGET_EMAIL=<you@example.com> \
-#     [ADMIN_IP=<your public IPv4>] bash infra/bootstrap/bootstrap.sh
+#     [ADMIN_IP=<your public IPv4>] [ADMIN_BOOTSTRAP_EMAIL=<first admin email>] bash infra/bootstrap/bootstrap.sh
 set -euo pipefail
 
 : "${GITHUB_REPO:?set GITHUB_REPO=owner/repo}"
@@ -151,6 +151,7 @@ set_var TF_ADMIN_PRINCIPAL_NAME "${ADMIN_NAME:-$ME_UPN}"
 set_var TF_ADMIN_PRINCIPAL_TYPE "${ADMIN_TYPE:-User}"
 set_var TF_BUDGET_CONTACT_EMAILS "[\"$BUDGET_EMAIL\"]"
 if [ -n "${ADMIN_IP:-}" ]; then set_var TF_ADMIN_IP_ADDRESSES "{\"admin\":\"$ADMIN_IP\"}"; fi
+if [ -n "${ADMIN_BOOTSTRAP_EMAIL:-}" ]; then set_var ADMIN_BOOTSTRAP_EMAIL "$ADMIN_BOOTSTRAP_EMAIL"; fi
 
 cat <<EOF
 
@@ -163,5 +164,7 @@ workflow (plan), then apply; then db-setup; then run "Deploy" once by hand; then
 to let merges to main deploy automatically.
 If an Azure login fails with AADSTS700213, compare the "OIDC subject" line in that job's log with the
 subjects above and re-run with INFRA_SUBJECT=... / DEPLOY_SUBJECT=... (or OIDC_SUBJECT_FORMAT=...).
+Admin sign-in is email + password: add secret ADMIN_BOOTSTRAP_PASSWORD (>=12 chars) under
+Settings -> Secrets, and set variable ADMIN_BOOTSTRAP_EMAIL if not passed here.
 Optional: TF_HOST_PRINCIPAL_OBJECT_IDS (JSON list) for host staff photo access.
 EOF

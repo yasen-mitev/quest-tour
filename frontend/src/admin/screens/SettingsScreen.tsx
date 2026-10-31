@@ -1,0 +1,279 @@
+import { useCallback, useEffect, useState } from "react";
+import { adminApi, HttpErrorWithBody, type AdminUserOut, type AuthSettings } from "../api";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+
+const MIN_PASSWORD_LENGTH = 12;
+
+/** The message to show for a failed settings call: the server's own reason for a 409, its first
+ *  validation message for a 422, otherwise the screen's fallback. */
+function failureMessage(err: unknown, fallback: string): string {
+  if (err instanceof HttpErrorWithBody) {
+    if (err.status === 409) {
+      const detail = (err.body as { detail?: string } | null)?.detail;
+      if (detail) return detail;
+    }
+    if (err.status === 422) {
+      const message = (err.body as { errors?: { message: string }[] } | null)?.errors?.[0]?.message;
+      if (message) return message;
+    }
+  }
+  return fallback;
+}
+
+/** Sign-in settings (issue: password admins by default): the Microsoft Entra toggle, plus — for
+ *  admins signed in with a password — their own password and the list of password administrators. */
+export function SettingsScreen() {
+  const [settings, setSettings] = useState<AuthSettings | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    adminApi.authSettings().then(setSettings).catch(() => setError("Could not load the settings."));
+  }, []);
+
+  return (
+    <div className="admin-section">
+      <h1 className="t-title">Settings</h1>
+      {error && <p className="qc-field__error">{error}</p>}
+      {!settings && !error && <p className="t-body">Loading…</p>}
+      {settings && (
+        <>
+          <EntraSection settings={settings} />
+          {settings.session_provider === "password" ? (
+            <>
+              <ChangePasswordSection />
+              <AdministratorsSection />
+            </>
+          ) : (
+            <p className="t-body">Password admins are managed by a password admin.</p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function EntraSection({ settings }: { settings: AuthSettings }) {
+  const [enabled, setEnabled] = useState(settings.entra_enabled);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const locked = !settings.entra_configured || settings.mode === "dev";
+
+  const toggle = async (next: boolean) => {
+    setError(null);
+    setBusy(true);
+    try {
+      const res = await adminApi.setEntraEnabled(next);
+      setEnabled(res.entra_enabled);
+    } catch (err) {
+      setError(failureMessage(err, "Could not change the sign-in setting."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section aria-labelledby="settings-entra">
+      <h2 className="t-body" id="settings-entra"><strong>Sign-in methods</strong></h2>
+      <label className="qc-field">
+        <span className="qc-field__label">
+          <input
+            type="checkbox"
+            checked={enabled}
+            disabled={locked || busy}
+            onChange={(e) => toggle(e.target.checked)}
+          />{" "}
+          Microsoft Entra sign-in
+        </span>
+      </label>
+      {!settings.entra_configured && (
+        <p className="t-caption">Set the ADMIN_ENTRA_* deployment values and re-run Infra apply first.</p>
+      )}
+      {settings.mode === "dev" && (
+        <p className="t-caption">Sign-in is fixed to development mode on this server.</p>
+      )}
+      {error && <p className="qc-field__error">{error}</p>}
+    </section>
+  );
+}
+
+function ChangePasswordSection() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [repeat, setRepeat] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setDone(false);
+    if (next !== repeat) return setError("The new passwords do not match.");
+    if (next.length < MIN_PASSWORD_LENGTH) {
+      return setError(`The new password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+    }
+    try {
+      await adminApi.changePassword(current, next);
+      setCurrent("");
+      setNext("");
+      setRepeat("");
+      setDone(true);
+    } catch (err) {
+      setError(
+        err instanceof HttpErrorWithBody && err.status === 400
+          ? "Current password is wrong"
+          : failureMessage(err, "Could not change the password."),
+      );
+    }
+  };
+
+  return (
+    <section aria-labelledby="settings-password">
+      <h2 className="t-body" id="settings-password"><strong>Change my password</strong></h2>
+      <form onSubmit={submit}>
+        <label className="qc-field">
+          <span className="qc-field__label">Current password</span>
+          <input className="qc-input" type="password" value={current} required
+                 autoComplete="current-password" onChange={(e) => setCurrent(e.target.value)} />
+        </label>
+        <label className="qc-field">
+          <span className="qc-field__label">New password</span>
+          <input className="qc-input" type="password" value={next} required
+                 autoComplete="new-password" onChange={(e) => setNext(e.target.value)} />
+        </label>
+        <label className="qc-field">
+          <span className="qc-field__label">Repeat new password</span>
+          <input className="qc-input" type="password" value={repeat} required
+                 autoComplete="new-password" onChange={(e) => setRepeat(e.target.value)} />
+        </label>
+        <button className="qc-btn qc-btn--primary" type="submit">Change password</button>
+        {error && <p className="qc-field__error">{error}</p>}
+        {done && <p className="t-body">Password changed.</p>}
+      </form>
+    </section>
+  );
+}
+
+function AdministratorsSection() {
+  const [admins, setAdmins] = useState<AdminUserOut[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [resetPasswords, setResetPasswords] = useState<Record<number, string>>({});
+  const [removing, setRemoving] = useState<AdminUserOut | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      setAdmins(await adminApi.listAdmins());
+    } catch {
+      setError("Could not load the administrators.");
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const add = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setNotice(null);
+    try {
+      await adminApi.createAdmin(email, password);
+      setEmail("");
+      setPassword("");
+      await load();
+    } catch (err) {
+      setError(failureMessage(err, "Could not add the administrator."));
+    }
+  };
+
+  const remove = async () => {
+    if (!removing) return;
+    setError(null);
+    setNotice(null);
+    setBusy(true);
+    try {
+      await adminApi.deleteAdmin(removing.id);
+      await load();
+    } catch (err) {
+      setError(failureMessage(err, "Could not remove the administrator."));
+    } finally {
+      setBusy(false);
+      setRemoving(null);
+    }
+  };
+
+  const reset = async (admin: AdminUserOut) => {
+    setError(null);
+    setNotice(null);
+    try {
+      await adminApi.resetAdminPassword(admin.id, resetPasswords[admin.id] ?? "");
+      setResetPasswords((prev) => ({ ...prev, [admin.id]: "" }));
+      setNotice(`Password reset for ${admin.email}.`);
+    } catch (err) {
+      setError(failureMessage(err, "Could not reset the password."));
+    }
+  };
+
+  return (
+    <section aria-labelledby="settings-admins">
+      <h2 className="t-body" id="settings-admins"><strong>Administrators</strong></h2>
+      {error && <p className="qc-field__error">{error}</p>}
+      {notice && <p className="t-body">{notice}</p>}
+      {admins && (
+        <ul className="admin-list" aria-label="Administrators">
+          {admins.map((admin) => (
+            <li key={admin.id} className="admin-list-item">
+              <div>
+                <strong className="t-body">{admin.email}</strong>
+                {admin.is_bootstrap && <span className="t-caption"> — first administrator</span>}
+              </div>
+              <div className="admin-row-actions">
+                <input
+                  className="qc-input"
+                  type="password"
+                  aria-label={`New password for ${admin.email}`}
+                  autoComplete="new-password"
+                  value={resetPasswords[admin.id] ?? ""}
+                  onChange={(e) => setResetPasswords((prev) => ({ ...prev, [admin.id]: e.target.value }))}
+                />
+                <button type="button" className="qc-btn qc-btn--secondary" onClick={() => reset(admin)}>
+                  Reset password
+                </button>
+                <button type="button" className="qc-btn qc-btn--secondary" onClick={() => setRemoving(admin)}>
+                  Remove
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form onSubmit={add}>
+        <label className="qc-field">
+          <span className="qc-field__label">New admin email</span>
+          <input className="qc-input" type="email" value={email} required
+                 autoComplete="off" onChange={(e) => setEmail(e.target.value)} />
+        </label>
+        <label className="qc-field">
+          <span className="qc-field__label">New admin password</span>
+          <input className="qc-input" type="password" value={password} required
+                 autoComplete="new-password" onChange={(e) => setPassword(e.target.value)} />
+        </label>
+        <button className="qc-btn qc-btn--primary" type="submit">Add administrator</button>
+      </form>
+      {removing && (
+        <ConfirmDialog
+          title="Remove administrator"
+          body={`${removing.email} will no longer be able to sign in.`}
+          confirmLabel="Remove"
+          danger
+          busy={busy}
+          onConfirm={remove}
+          onCancel={() => setRemoving(null)}
+        />
+      )}
+    </section>
+  );
+}

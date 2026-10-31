@@ -24,12 +24,14 @@ dependencies = [
   "fpdf2>=2.8",
   "pillow>=10",
   "pillow-heif>=0.18",
+  "argon2-cffi>=23.1",
 ]
 
 [project.scripts]
 sync-config = "questtour.cli.sync_config:main"
 import-yaml = "questtour.cli.sync_config:main"
 db-setup = "questtour.cli.db_setup:main"
+admin-password = "questtour.cli.admin_password:main"
 
 [dependency-groups]
 dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.6"]

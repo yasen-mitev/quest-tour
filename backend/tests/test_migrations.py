@@ -40,6 +40,17 @@ def test_photo_deleted_at_is_nullable_and_indexed(tmp_path):
     assert "ix_photos_deleted_at" in indexes
 
 
+def test_admin_tables_exist_at_head(tmp_path):
+    url = f"sqlite:///{tmp_path / 'a.db'}"
+    cfg = Config(str(BACKEND / "alembic.ini"))
+    cfg.set_main_option("script_location", str(BACKEND / "alembic"))
+    cfg.set_main_option("sqlalchemy.url", url)
+    command.upgrade(cfg, "head")
+    tables = inspect(create_engine(url)).get_table_names()
+    assert "admin_users" in tables
+    assert "app_settings" in tables
+
+
 def test_sqlite_upgrade_emits_no_native_alter_column(tmp_path):
     """SQLite cannot run ``ALTER TABLE ... ALTER COLUMN ... SET NOT NULL`` (only added in
     SQLite >= 3.53; ubuntu-latest runners ship an older sqlite3). Migrations must use the
@@ -65,3 +76,22 @@ def test_sqlite_upgrade_emits_no_native_alter_column(tmp_path):
     ddl = stream.getvalue()
     assert "ALTER COLUMN" not in ddl
     assert "_alembic_tmp" in ddl  # batch table-rebuild actually ran, not a silent no-op
+
+
+def test_upgrade_head_with_password_mode_env_without_credentials(tmp_path, monkeypatch):
+    """Running migrations must not depend on the app's startup checks (no bootstrap credentials)."""
+    from questtour.settings import get_settings
+
+    monkeypatch.setenv("ADMIN_AUTH_PROVIDER", "password")
+    monkeypatch.delenv("ADMIN_BOOTSTRAP_EMAIL", raising=False)
+    monkeypatch.delenv("ADMIN_BOOTSTRAP_PASSWORD", raising=False)
+    get_settings.cache_clear()
+    try:
+        url = f"sqlite:///{tmp_path / 'pw.db'}"
+        cfg = Config(str(BACKEND / "alembic.ini"))
+        cfg.set_main_option("script_location", str(BACKEND / "alembic"))
+        cfg.set_main_option("sqlalchemy.url", url)
+        command.upgrade(cfg, "head")
+        assert "admin_users" in inspect(create_engine(url)).get_table_names()
+    finally:
+        get_settings.cache_clear()

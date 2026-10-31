@@ -52,25 +52,52 @@ variable "deploy_principal_object_id" {
   type        = string
 }
 
-variable "admin_entra_tenant_id" {
-  description = "Entra tenant hosting the admin panel client app."
+variable "admin_auth_provider" {
+  description = "Admin sign-in: 'password' (default) or 'entra' (existing deployments: password + Microsoft sign-in)."
   type        = string
+  default     = "password"
+  validation {
+    condition     = contains(["password", "entra"], var.admin_auth_provider)
+    error_message = "admin_auth_provider must be 'password' or 'entra'."
+  }
+}
+
+variable "admin_bootstrap_email" {
+  description = "Email of the first admin (seeded on first start)."
+  type        = string
+  default     = ""
+}
+
+variable "admin_bootstrap_password" {
+  description = "Initial password of the first admin (>=12 chars); hashed into the DB on first start, changeable in the console."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "admin_entra_tenant_id" {
+  description = "Entra tenant hosting the admin panel client app; only needed for admin_auth_provider = \"entra\" or to enable Entra later in the console."
+  type        = string
+  default     = ""
 }
 
 variable "admin_entra_client_id" {
-  description = "Application (client) ID of the admin panel Entra app registration."
+  description = "Application (client) ID of the admin panel Entra app registration; only needed for admin_auth_provider = \"entra\" or to enable Entra later in the console."
   type        = string
+  default     = ""
 }
 
 variable "admin_entra_client_secret" {
-  description = "Client secret of the admin panel Entra app registration."
+  description = "Client secret of the admin panel Entra app registration; only needed for admin_auth_provider = \"entra\" or to enable Entra later in the console."
   type        = string
+  default     = ""
   sensitive   = true
 }
 
 variable "admin_entra_group_object_id" {
-  description = "Entra group allowed to use the admin panel."
+  description = "Entra group allowed to use the admin panel; only needed for admin_auth_provider = \"entra\" or to enable Entra later in the console."
   type        = string
+  default     = ""
 }
 
 variable "admin_session_secret" {

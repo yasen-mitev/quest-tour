@@ -29,6 +29,9 @@ variables {
   admin_entra_client_secret   = "test-client-secret"
   admin_entra_group_object_id = "44444444-4444-4444-4444-444444444444"
   admin_session_secret        = "test-session-secret-at-least-32-chars-long"
+  admin_auth_provider         = "entra"
+  admin_bootstrap_email       = "boss@example.com"
+  admin_bootstrap_password    = "test-bootstrap-password"
 }
 
 run "prod_shape" {
@@ -58,7 +61,9 @@ run "prod_shape" {
       azurerm_linux_web_app.app.app_settings["ADMIN_AUTH_PROVIDER"] == "entra" &&
       azurerm_linux_web_app.app.app_settings["ADMIN_SESSION_SECURE"] == "true" &&
       azurerm_linux_web_app.app.app_settings["ADMIN_ENTRA_REDIRECT_URI"] == "https://app-qt-test.azurewebsites.net/api/admin/auth/callback" &&
-      azurerm_linux_web_app.app.app_settings["ADMIN_ENTRA_GROUP_OBJECT_ID"] == "44444444-4444-4444-4444-444444444444"
+      azurerm_linux_web_app.app.app_settings["ADMIN_ENTRA_GROUP_OBJECT_ID"] == "44444444-4444-4444-4444-444444444444" &&
+      azurerm_linux_web_app.app.app_settings["ADMIN_BOOTSTRAP_EMAIL"] == "boss@example.com" &&
+      contains(keys(azurerm_linux_web_app.app.app_settings), "ADMIN_ENTRA_TENANT_ID")
     )
     error_message = "app settings must match what questtour.settings and startup.sh expect"
   }
@@ -131,6 +136,58 @@ run "cidr_admin_rules" {
     condition     = azurerm_postgresql_flexible_server_firewall_rule.admin["site"].start_ip_address == "198.51.100.0" && azurerm_postgresql_flexible_server_firewall_rule.admin["site"].end_ip_address == "198.51.100.255"
     error_message = "a CIDR becomes network address .. broadcast"
   }
+}
+
+run "password_default" {
+  command = plan
+
+  variables {
+    admin_auth_provider         = "password"
+    admin_entra_tenant_id       = ""
+    admin_entra_client_id       = ""
+    admin_entra_client_secret   = ""
+    admin_entra_group_object_id = ""
+  }
+
+  assert {
+    condition = (
+      azurerm_linux_web_app.app.app_settings["ADMIN_AUTH_PROVIDER"] == "password" &&
+      azurerm_linux_web_app.app.app_settings["ADMIN_BOOTSTRAP_EMAIL"] == "boss@example.com" &&
+      !contains(keys(azurerm_linux_web_app.app.app_settings), "ADMIN_ENTRA_TENANT_ID")
+    )
+    error_message = "password mode must not ship empty Entra settings"
+  }
+}
+
+run "missing_bootstrap_credentials" {
+  command = plan
+
+  variables {
+    admin_bootstrap_password = ""
+  }
+
+  expect_failures = [azurerm_linux_web_app.app]
+}
+
+run "invalid_bootstrap_email" {
+  command = plan
+
+  variables {
+    admin_bootstrap_email = "not-an-email"
+  }
+
+  expect_failures = [azurerm_linux_web_app.app]
+}
+
+run "entra_requires_entra_vars" {
+  command = plan
+
+  variables {
+    admin_auth_provider   = "entra"
+    admin_entra_tenant_id = ""
+  }
+
+  expect_failures = [azurerm_linux_web_app.app]
 }
 
 run "rejects_bad_app_name" {

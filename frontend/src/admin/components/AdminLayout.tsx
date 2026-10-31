@@ -11,6 +11,7 @@ const LINKS = [
   { key: "photos", label: "Photos" },
   { key: "albums", label: "Albums" },
   { key: "feedback", label: "Feedback" },
+  { key: "settings", label: "Settings" },
 ];
 
 type AdminLayoutProps = { active: string; children: ReactNode };

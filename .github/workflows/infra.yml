@@ -47,7 +47,11 @@ jobs:
       TF_VAR_host_principal_object_ids: ${{ vars.TF_HOST_PRINCIPAL_OBJECT_IDS || '[]' }}
       TF_VAR_budget_contact_emails: ${{ vars.TF_BUDGET_CONTACT_EMAILS }}
       TF_VAR_deploy_principal_object_id: ${{ vars.TF_DEPLOY_PRINCIPAL_OBJECT_ID }}
-      # Admin panel Entra auth: client/session secrets are GitHub secrets, the rest are variables.
+      # Admin panel auth: passwords/secrets are GitHub secrets, the rest are variables.
+      TF_VAR_admin_auth_provider:       ${{ vars.ADMIN_AUTH_PROVIDER || 'password' }}
+      ADMIN_AUTH_PROVIDER_VAR:          ${{ vars.ADMIN_AUTH_PROVIDER }} # raw, to detect "forgot to set it"
+      TF_VAR_admin_bootstrap_email:     ${{ vars.ADMIN_BOOTSTRAP_EMAIL }}
+      TF_VAR_admin_bootstrap_password:  ${{ secrets.ADMIN_BOOTSTRAP_PASSWORD }}
       TF_VAR_admin_entra_tenant_id:       ${{ vars.ADMIN_ENTRA_TENANT_ID }}
       TF_VAR_admin_entra_client_id:       ${{ vars.ADMIN_ENTRA_CLIENT_ID }}
       TF_VAR_admin_entra_client_secret:   ${{ secrets.ADMIN_ENTRA_CLIENT_SECRET }}
@@ -69,12 +73,27 @@ jobs:
           for name in ARM_CLIENT_ID ARM_TENANT_ID ARM_SUBSCRIPTION_ID TF_VAR_app_name \
             TF_VAR_resource_group_name TF_VAR_admin_principal_object_id TF_VAR_admin_principal_name \
             TF_VAR_budget_contact_emails TF_VAR_deploy_principal_object_id \
-            TF_VAR_admin_entra_tenant_id TF_VAR_admin_entra_client_id TF_VAR_admin_entra_group_object_id \
-            TF_VAR_admin_entra_client_secret TF_VAR_admin_session_secret; do
+            TF_VAR_admin_session_secret; do
             if [ -z "${!name}" ]; then
               echo "::error::$name is empty: set its repository variable (infra/README.md)"; exit 1
             fi
           done
+          for name in TF_VAR_admin_bootstrap_email TF_VAR_admin_bootstrap_password; do
+            if [ -z "${!name}" ]; then
+              echo "::error::${name#TF_VAR_} is empty. Set repository variable ADMIN_BOOTSTRAP_EMAIL and secret ADMIN_BOOTSTRAP_PASSWORD (infra/README.md §3.1). Existing deployments must also set variable ADMIN_AUTH_PROVIDER=entra to keep Microsoft sign-in."; exit 1
+            fi
+          done
+          if [ -z "$ADMIN_AUTH_PROVIDER_VAR" ] && { [ -n "$TF_VAR_admin_entra_tenant_id" ] || [ -n "$TF_VAR_admin_entra_client_id" ] || [ -n "$TF_VAR_admin_entra_group_object_id" ] || [ -n "$TF_VAR_admin_entra_client_secret" ]; }; then
+            echo "::error::ADMIN_ENTRA_* values are set but variable ADMIN_AUTH_PROVIDER is not. This looks like an existing Entra deployment: set ADMIN_AUTH_PROVIDER=entra (or =password to deliberately make password the default and enable Entra later in the console)."; exit 1
+          fi
+          case "$TF_VAR_admin_auth_provider" in
+            password) ;;
+            entra)
+              for name in TF_VAR_admin_entra_tenant_id TF_VAR_admin_entra_client_id TF_VAR_admin_entra_group_object_id TF_VAR_admin_entra_client_secret; do
+                [ -n "${!name}" ] || { echo "::error::${name#TF_VAR_} is empty but ADMIN_AUTH_PROVIDER=entra"; exit 1; }
+              done ;;
+            *) echo "::error::ADMIN_AUTH_PROVIDER must be 'password' or 'entra' (got '$TF_VAR_admin_auth_provider')"; exit 1 ;;
+          esac
       - name: Show OIDC subject (compare with the federated credential if login fails)
         working-directory: .
         run: |

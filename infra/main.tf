@@ -17,8 +17,15 @@ locals {
 
   tags = { app = "quest-tour", env = "prod", managed_by = "terraform" }
 
+  entra_settings = var.admin_entra_tenant_id == "" ? tomap({}) : tomap({
+    ADMIN_ENTRA_TENANT_ID       = var.admin_entra_tenant_id
+    ADMIN_ENTRA_CLIENT_ID       = var.admin_entra_client_id
+    ADMIN_ENTRA_CLIENT_SECRET   = var.admin_entra_client_secret
+    ADMIN_ENTRA_GROUP_OBJECT_ID = var.admin_entra_group_object_id
+  })
+
   # Every value questtour.settings reads in prod (technical §7: app settings, no secrets needed).
-  app_settings = {
+  app_settings = merge({
     SCM_DO_BUILD_DURING_DEPLOYMENT = "true"
     DATABASE_URL                   = "postgresql+psycopg://${local.web_app_name}@${local.pg_fqdn}:5432/${var.db_name}?sslmode=require"
     DATABASE_AUTH                  = "azure_ad"
@@ -31,15 +38,14 @@ locals {
     IMAGES_CONTAINER               = azurerm_storage_container.images.name
     ALBUMS_CONTAINER               = azurerm_storage_container.albums.name
     STATIC_DIR                     = "static"
-    # Admin panel auth (Microsoft Entra). Redirect URI must match the Entra app registration.
-    ADMIN_AUTH_PROVIDER           = "entra"
+    # Admin panel auth: email + password by default; Microsoft Entra optional (console toggle).
+    # The Entra redirect URI must match the Entra app registration.
+    ADMIN_AUTH_PROVIDER           = var.admin_auth_provider
+    ADMIN_BOOTSTRAP_EMAIL         = var.admin_bootstrap_email
+    ADMIN_BOOTSTRAP_PASSWORD      = var.admin_bootstrap_password
     ADMIN_SESSION_SECRET          = var.admin_session_secret
     ADMIN_SESSION_SECURE          = "true"
     ADMIN_SESSION_MAX_AGE_MINUTES = "720"
-    ADMIN_ENTRA_TENANT_ID         = var.admin_entra_tenant_id
-    ADMIN_ENTRA_CLIENT_ID         = var.admin_entra_client_id
-    ADMIN_ENTRA_CLIENT_SECRET     = var.admin_entra_client_secret
     ADMIN_ENTRA_REDIRECT_URI      = "${local.public_base_url}/api/admin/auth/callback"
-    ADMIN_ENTRA_GROUP_OBJECT_ID   = var.admin_entra_group_object_id
-  }
+  }, local.entra_settings)
 }

@@ -7,6 +7,7 @@ import { GamesScreen } from "./screens/GamesScreen";
 import { LandmarksScreen } from "./screens/LandmarksScreen";
 import { LoginScreen } from "./screens/LoginScreen";
 import { PhotosScreen } from "./screens/PhotosScreen";
+import { SettingsScreen } from "./screens/SettingsScreen";
 import { TeamsScreen } from "./screens/TeamsScreen";
 
 function AdminNotFound() {
@@ -47,6 +48,9 @@ export function AdminApp({ path }: { path: string }) {
       break;
     case "feedback":
       screen = <FeedbackScreen />;
+      break;
+    case "settings":
+      screen = <SettingsScreen />;
       break;
     default:
       screen = <AdminNotFound />;
