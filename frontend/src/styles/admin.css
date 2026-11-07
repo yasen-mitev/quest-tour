@@ -62,6 +62,17 @@
 .admin-section--narrow { max-width: 640px; }
 .admin-section--narrow .admin-list-item strong { overflow-wrap: anywhere; }
 .admin-section--narrow .admin-row-actions .qc-btn { white-space: nowrap; }
+/* Password field: eye button inside the input's right edge (PasswordField) */
+.admin-password { position: relative; }
+.admin-password .qc-input { padding-right: 52px; }
+.admin-password .qc-input::-ms-reveal { display: none; }         /* Edge's own eye would double ours */
+.admin-password__toggle {
+  position: absolute; top: 0; right: 0; width: 52px; height: 100%; display: grid; place-items: center;
+  padding: 0; border: 0; border-radius: var(--radius-md); background: none; color: var(--ink-muted); cursor: pointer;
+}
+.admin-password__toggle:hover { color: var(--ink); }
+.admin-password__toggle:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.admin-password__toggle svg { width: 22px; height: 22px; }
 /* Success confirmation (Settings): accent ink with a check, under the row or form it confirms */
 .admin-success { display: flex; align-items: flex-start; gap: var(--space-2); margin: var(--space-1) 0 0; font: 700 15px/20px var(--font-sans); color: var(--accent); }
 .admin-success svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }

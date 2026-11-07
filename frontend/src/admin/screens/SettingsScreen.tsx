@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminApi, HttpErrorWithBody, type AdminUserOut, type AuthSettings } from "../api";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { PasswordField } from "../components/PasswordField";
 import { ResetPasswordDialog } from "../components/ResetPasswordDialog";
 import { Icon } from "../../components/Icon";
 
@@ -135,21 +136,10 @@ function ChangePasswordSection() {
     <section className="admin-group" aria-labelledby="settings-password">
       <h2 className="t-subtitle" id="settings-password">Change my password</h2>
       <form onSubmit={submit} className="admin-form">
-        <label className="qc-field">
-          <span className="qc-field__label">Current password</span>
-          <input className="qc-input" type="password" value={current} required
-                 autoComplete="current-password" onChange={(e) => setCurrent(e.target.value)} />
-        </label>
-        <label className="qc-field">
-          <span className="qc-field__label">New password</span>
-          <input className="qc-input" type="password" value={next} required
-                 autoComplete="new-password" onChange={(e) => setNext(e.target.value)} />
-        </label>
-        <label className="qc-field">
-          <span className="qc-field__label">Repeat new password</span>
-          <input className="qc-input" type="password" value={repeat} required
-                 autoComplete="new-password" onChange={(e) => setRepeat(e.target.value)} />
-        </label>
+        <PasswordField label="Current password" value={current} onChange={setCurrent}
+                       autoComplete="current-password" />
+        <PasswordField label="New password" value={next} onChange={setNext} autoComplete="new-password" />
+        <PasswordField label="Repeat new password" value={repeat} onChange={setRepeat} autoComplete="new-password" />
         <button className="qc-btn qc-btn--primary" type="submit">Change password</button>
         {error && <p className="qc-field__error">{error}</p>}
         {done && (
@@ -303,11 +293,8 @@ function AdministratorsSection({ me }: { me: string }) {
           <input className="qc-input" type="email" value={email} required
                  autoComplete="off" onChange={(e) => setEmail(e.target.value)} />
         </label>
-        <label className="qc-field">
-          <span className="qc-field__label">New admin password</span>
-          <input className="qc-input" type="password" value={password} required
-                 autoComplete="new-password" onChange={(e) => setPassword(e.target.value)} />
-        </label>
+        <PasswordField label="New admin password" value={password} onChange={setPassword}
+                       autoComplete="new-password" />
         <button className="qc-btn qc-btn--primary" type="submit">Add administrator</button>
       </form>
       {resetting && (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { adminApi, HttpErrorWithBody, type AuthMethods } from "../api";
+import { PasswordField } from "../components/PasswordField";
 
 export function LoginScreen() {
   const [methods, setMethods] = useState<AuthMethods | null>(null);
@@ -74,17 +75,7 @@ function PasswordForm() {
           onChange={(e) => setEmail(e.target.value)}
         />
       </label>
-      <label className="qc-field">
-        <span className="qc-field__label">Password</span>
-        <input
-          className="qc-input"
-          type="password"
-          value={password}
-          required
-          autoComplete="current-password"
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </label>
+      <PasswordField label="Password" value={password} onChange={setPassword} autoComplete="current-password" />
       <button className="qc-btn qc-btn--primary" type="submit">
         Sign in
       </button>

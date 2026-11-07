@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { PasswordField } from "./PasswordField";
 
 interface ResetPasswordDialogProps {
   email: string;
@@ -52,16 +53,9 @@ export function ResetPasswordDialog({
         <p className="qc-sheet__body">
           The new password takes effect immediately. Give it to {email} yourself; they are not notified.
         </p>
-        <label className="qc-field">
-          <span className="qc-field__label">New password</span>
-          <input ref={firstRef} className="qc-input" type="password" value={password} required
-                 autoComplete="new-password" onChange={(e) => setPassword(e.target.value)} />
-        </label>
-        <label className="qc-field">
-          <span className="qc-field__label">Repeat new password</span>
-          <input className="qc-input" type="password" value={repeat} required
-                 autoComplete="new-password" onChange={(e) => setRepeat(e.target.value)} />
-        </label>
+        <PasswordField ref={firstRef} label="New password" value={password} onChange={setPassword}
+                       autoComplete="new-password" />
+        <PasswordField label="Repeat new password" value={repeat} onChange={setRepeat} autoComplete="new-password" />
         {message && <p className="qc-field__error" role="alert">{message}</p>}
         <div className="qc-sheet__actions">
           <button type="submit" disabled={busy} className="qc-btn qc-btn--primary qc-btn--block">
