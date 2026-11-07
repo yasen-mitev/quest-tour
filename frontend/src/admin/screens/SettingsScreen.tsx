@@ -72,26 +72,28 @@ function EntraSection({ settings }: { settings: AuthSettings }) {
   };
 
   return (
-    <section aria-labelledby="settings-entra">
-      <h2 className="t-body" id="settings-entra"><strong>Sign-in methods</strong></h2>
-      <label className="qc-field">
-        <span className="qc-field__label">
-          <input
-            type="checkbox"
-            checked={enabled}
-            disabled={locked || busy}
-            onChange={(e) => toggle(e.target.checked)}
-          />{" "}
-          Microsoft Entra sign-in
-        </span>
-      </label>
-      {!settings.entra_configured && (
-        <p className="t-caption">Set the ADMIN_ENTRA_* deployment values and re-run Infra apply first.</p>
-      )}
-      {settings.mode === "dev" && (
-        <p className="t-caption">Sign-in is fixed to development mode on this server.</p>
-      )}
-      {error && <p className="qc-field__error">{error}</p>}
+    <section className="admin-settings-group" aria-labelledby="settings-entra">
+      <h2 className="t-subtitle" id="settings-entra">Sign-in methods</h2>
+      <div className="admin-form">
+        <label className="qc-field">
+          <span className="qc-field__label">
+            <input
+              type="checkbox"
+              checked={enabled}
+              disabled={locked || busy}
+              onChange={(e) => toggle(e.target.checked)}
+            />{" "}
+            Microsoft Entra sign-in
+          </span>
+        </label>
+        {!settings.entra_configured && (
+          <p className="t-caption">Set the ADMIN_ENTRA_* deployment values and re-run Infra apply first.</p>
+        )}
+        {settings.mode === "dev" && (
+          <p className="t-caption">Sign-in is fixed to development mode on this server.</p>
+        )}
+        {error && <p className="qc-field__error">{error}</p>}
+      </div>
     </section>
   );
 }
@@ -127,9 +129,9 @@ function ChangePasswordSection() {
   };
 
   return (
-    <section aria-labelledby="settings-password">
-      <h2 className="t-body" id="settings-password"><strong>Change my password</strong></h2>
-      <form onSubmit={submit}>
+    <section className="admin-settings-group" aria-labelledby="settings-password">
+      <h2 className="t-subtitle" id="settings-password">Change my password</h2>
+      <form onSubmit={submit} className="admin-form">
         <label className="qc-field">
           <span className="qc-field__label">Current password</span>
           <input className="qc-input" type="password" value={current} required
@@ -218,8 +220,8 @@ function AdministratorsSection() {
   };
 
   return (
-    <section aria-labelledby="settings-admins">
-      <h2 className="t-body" id="settings-admins"><strong>Administrators</strong></h2>
+    <section className="admin-settings-group" aria-labelledby="settings-admins">
+      <h2 className="t-subtitle" id="settings-admins">Administrators</h2>
       {error && <p className="qc-field__error">{error}</p>}
       {notice && <p className="t-body">{notice}</p>}
       {admins && (
@@ -250,7 +252,7 @@ function AdministratorsSection() {
           ))}
         </ul>
       )}
-      <form onSubmit={add}>
+      <form onSubmit={add} className="admin-form">
         <label className="qc-field">
           <span className="qc-field__label">New admin email</span>
           <input className="qc-input" type="email" value={email} required

@@ -85,6 +85,9 @@
 }
 .admin-form .qc-input { max-width: 100%; }
 .admin-form .qc-btn[type="submit"] { align-self: flex-start; }
+/* Settings: one titled group per concern (heading, cards and messages spaced on one rhythm) */
+.admin-settings-group { display: grid; gap: var(--space-3); }
+.admin-settings-group > .t-subtitle { margin: 0; }
 .admin-extra-fields { margin-top: var(--space-3); padding-top: var(--space-4); border-top: 2px solid var(--gold-500); }
 .admin-assignments { display: flex; flex-direction: column; gap: var(--space-3); }
 .admin-assignment {
