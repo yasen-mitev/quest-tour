@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminApi, HttpErrorWithBody, type AdminUserOut, type AuthSettings } from "../api";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { ResetPasswordDialog } from "../components/ResetPasswordDialog";
 
 const MIN_PASSWORD_LENGTH = 12;
 
@@ -161,7 +162,8 @@ function AdministratorsSection() {
   const [notice, setNotice] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [resetPasswords, setResetPasswords] = useState<Record<number, string>>({});
+  const [resetting, setResetting] = useState<AdminUserOut | null>(null);
+  const [resetError, setResetError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<AdminUserOut | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -207,15 +209,26 @@ function AdministratorsSection() {
     }
   };
 
-  const reset = async (admin: AdminUserOut) => {
+  const openReset = (admin: AdminUserOut) => {
     setError(null);
     setNotice(null);
+    setResetError(null);
+    setResetting(admin);
+  };
+
+  // Failures stay in the dialog, so the admin can correct the password and retry.
+  const reset = async (password: string) => {
+    if (!resetting) return;
+    setResetError(null);
+    setBusy(true);
     try {
-      await adminApi.resetAdminPassword(admin.id, resetPasswords[admin.id] ?? "");
-      setResetPasswords((prev) => ({ ...prev, [admin.id]: "" }));
-      setNotice(`Password reset for ${admin.email}.`);
+      await adminApi.resetAdminPassword(resetting.id, password);
+      setNotice(`Password reset for ${resetting.email}.`);
+      setResetting(null);
     } catch (err) {
-      setError(failureMessage(err, "Could not reset the password."));
+      setResetError(failureMessage(err, "Could not reset the password."));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -233,15 +246,7 @@ function AdministratorsSection() {
                 {admin.is_bootstrap && <span className="t-caption"> — first administrator</span>}
               </div>
               <div className="admin-row-actions">
-                <input
-                  className="qc-input"
-                  type="password"
-                  aria-label={`New password for ${admin.email}`}
-                  autoComplete="new-password"
-                  value={resetPasswords[admin.id] ?? ""}
-                  onChange={(e) => setResetPasswords((prev) => ({ ...prev, [admin.id]: e.target.value }))}
-                />
-                <button type="button" className="qc-btn qc-btn--secondary" onClick={() => reset(admin)}>
+                <button type="button" className="qc-btn qc-btn--secondary" onClick={() => openReset(admin)}>
                   Reset password
                 </button>
                 <button type="button" className="qc-btn qc-btn--secondary" onClick={() => setRemoving(admin)}>
@@ -265,6 +270,16 @@ function AdministratorsSection() {
         </label>
         <button className="qc-btn qc-btn--primary" type="submit">Add administrator</button>
       </form>
+      {resetting && (
+        <ResetPasswordDialog
+          email={resetting.email}
+          minLength={MIN_PASSWORD_LENGTH}
+          busy={busy}
+          error={resetError}
+          onSubmit={reset}
+          onCancel={() => setResetting(null)}
+        />
+      )}
       {removing && (
         <ConfirmDialog
           title="Remove administrator"

@@ -181,16 +181,63 @@ describe("SettingsScreen", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
 
-    it("resets an administrator's password", async () => {
+    async function openResetDialog(user: ReturnType<typeof userEvent.setup>) {
+      const list = await screen.findByRole("list", { name: "Administrators" });
+      const row = within(list).getAllByRole("listitem")[1];
+      expect(within(row).queryByLabelText(/password/i)).not.toBeInTheDocument();
+      await user.click(within(row).getByRole("button", { name: "Reset password" }));
+      return screen.getByRole("dialog", { name: "Reset password for second@example.com" });
+    }
+
+    it("resets an administrator's password in a dialog", async () => {
       const user = userEvent.setup();
       vi.mocked(adminApi.resetAdminPassword).mockResolvedValue({ ok: true });
       render(<SettingsScreen />);
-      const list = await screen.findByRole("list", { name: "Administrators" });
-      const row = within(list).getAllByRole("listitem")[1];
-      await user.type(within(row).getByLabelText("New password for second@example.com"), GOOD_PASSWORD);
-      await user.click(within(row).getByRole("button", { name: "Reset password" }));
+      const dialog = await openResetDialog(user);
+      expect(within(dialog).getByLabelText("New password")).toHaveFocus();
+      await user.type(within(dialog).getByLabelText("New password"), GOOD_PASSWORD);
+      await user.type(within(dialog).getByLabelText("Repeat new password"), GOOD_PASSWORD);
+      await user.click(within(dialog).getByRole("button", { name: "Reset password" }));
       expect(adminApi.resetAdminPassword).toHaveBeenCalledWith(2, GOOD_PASSWORD);
       expect(await screen.findByText("Password reset for second@example.com.")).toBeInTheDocument();
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("keeps the reset dialog open when the passwords differ or are too short", async () => {
+      const user = userEvent.setup();
+      render(<SettingsScreen />);
+      const dialog = await openResetDialog(user);
+      await user.type(within(dialog).getByLabelText("New password"), GOOD_PASSWORD);
+      await user.type(within(dialog).getByLabelText("Repeat new password"), GOOD_PASSWORD + "x");
+      await user.click(within(dialog).getByRole("button", { name: "Reset password" }));
+      expect(within(dialog).getByText("The new passwords do not match.")).toBeInTheDocument();
+
+      await user.clear(within(dialog).getByLabelText("New password"));
+      await user.clear(within(dialog).getByLabelText("Repeat new password"));
+      await user.type(within(dialog).getByLabelText("New password"), "short");
+      await user.type(within(dialog).getByLabelText("Repeat new password"), "short{Enter}");
+      expect(within(dialog).getByText("The new password must be at least 12 characters.")).toBeInTheDocument();
+      expect(adminApi.resetAdminPassword).not.toHaveBeenCalled();
+    });
+
+    it("shows a refused reset inside the dialog", async () => {
+      const user = userEvent.setup();
+      vi.mocked(adminApi.resetAdminPassword).mockRejectedValue(new Error("network"));
+      render(<SettingsScreen />);
+      const dialog = await openResetDialog(user);
+      await user.type(within(dialog).getByLabelText("New password"), GOOD_PASSWORD);
+      await user.type(within(dialog).getByLabelText("Repeat new password"), GOOD_PASSWORD + "{Enter}");
+      expect(await within(dialog).findByText("Could not reset the password.")).toBeInTheDocument();
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+
+    it("closes the reset dialog on Cancel without calling the server", async () => {
+      const user = userEvent.setup();
+      render(<SettingsScreen />);
+      const dialog = await openResetDialog(user);
+      await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(adminApi.resetAdminPassword).not.toHaveBeenCalled();
     });
   });
 });
