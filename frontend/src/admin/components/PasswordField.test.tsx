@@ -13,6 +13,18 @@ function Harness({ onSubmit = () => {} }: { onSubmit?: () => void }) {
   );
 }
 
+function RulesHarness() {
+  const [value, setValue] = useState("");
+  const [repeat, setRepeat] = useState("");
+  return (
+    <>
+      <PasswordField label="New password" value={value} onChange={setValue} autoComplete="new-password" minLength={12} />
+      <PasswordField label="Repeat new password" value={repeat} onChange={setRepeat} autoComplete="new-password"
+                     matches={value} />
+    </>
+  );
+}
+
 describe("PasswordField", () => {
   beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }));
   afterEach(() => vi.useRealTimers());
@@ -56,5 +68,50 @@ describe("PasswordField", () => {
     render(<Harness onSubmit={onSubmit} />);
     await user.click(screen.getByRole("button", { name: "Show password" }));
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  describe("live rules", () => {
+    it("shows the length rule up front and counts down while typing", async () => {
+      const user = setup();
+      render(<RulesHarness />);
+      const input = screen.getByLabelText("New password");
+      expect(input).toHaveAccessibleDescription("At least 12 characters");
+      await user.type(input, "12345678");
+      expect(input).toHaveAccessibleDescription("At least 12 characters (4 more)");
+      expect(screen.getByText("At least 12 characters (4 more)").closest(".admin-rule")).not.toHaveClass("admin-rule--met");
+    });
+
+    it("marks the length rule as met at 12 characters", async () => {
+      const user = setup();
+      render(<RulesHarness />);
+      const input = screen.getByLabelText("New password");
+      await user.type(input, "123456789012");
+      expect(input).toHaveAccessibleDescription("At least 12 characters");
+      expect(screen.getByText("At least 12 characters").closest(".admin-rule")).toHaveClass("admin-rule--met");
+    });
+
+    it("announces only when the rule flips, not on every keystroke", async () => {
+      const user = setup();
+      render(<RulesHarness />);
+      const input = screen.getByLabelText("New password");
+      const live = () => screen.getAllByRole("status").map((el) => el.textContent).join("|");
+      await user.type(input, "12345678901");
+      expect(live()).toBe("|");
+      await user.type(input, "2");
+      expect(live()).toBe("At least 12 characters: done|");
+    });
+
+    it("says nothing about matching until the repeat field is typed in", async () => {
+      const user = setup();
+      render(<RulesHarness />);
+      const repeat = screen.getByLabelText("Repeat new password");
+      expect(screen.queryByText(/match/i)).not.toBeInTheDocument();
+      await user.type(screen.getByLabelText("New password"), "a-long-enough-password");
+      await user.type(repeat, "a-long");
+      expect(repeat).toHaveAccessibleDescription("Doesn't match yet");
+      await user.type(repeat, "-enough-password");
+      expect(repeat).toHaveAccessibleDescription("Passwords match");
+      expect(screen.getByText("Passwords match").closest(".admin-rule")).toHaveClass("admin-rule--met");
+    });
   });
 });

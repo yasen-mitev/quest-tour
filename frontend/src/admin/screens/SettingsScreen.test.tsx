@@ -118,9 +118,10 @@ describe("SettingsScreen", () => {
       render(<SettingsScreen />);
       await fill(user, "old-password", GOOD_PASSWORD, GOOD_PASSWORD);
       expect(adminApi.changePassword).toHaveBeenCalledWith("old-password", GOOD_PASSWORD);
-      expect(await screen.findByRole("status")).toHaveTextContent(
+      const confirmation = await screen.findByText(
         "Your password was changed. Other devices where you're signed in stay signed in.",
       );
+      expect(confirmation).toHaveAttribute("role", "status");
     });
 
     it("says the current password is wrong on a 400", async () => {
@@ -175,9 +176,42 @@ describe("SettingsScreen", () => {
       render(<SettingsScreen />);
       await user.type(await screen.findByLabelText("New admin email"), "new@example.com");
       await user.type(screen.getByLabelText("New admin password"), GOOD_PASSWORD);
+      await user.type(screen.getByLabelText("Repeat password"), GOOD_PASSWORD);
       await user.click(screen.getByRole("button", { name: "Add administrator" }));
       expect(adminApi.createAdmin).toHaveBeenCalledWith("new@example.com", GOOD_PASSWORD);
       await waitFor(() => expect(adminApi.listAdmins).toHaveBeenCalledTimes(2));
+      expect(screen.getByLabelText("Repeat password")).toHaveValue("");
+    });
+
+    it("does not add an administrator when the passwords differ or are too short", async () => {
+      const user = userEvent.setup();
+      render(<SettingsScreen />);
+      await user.type(await screen.findByLabelText("New admin email"), "new@example.com");
+      await user.type(screen.getByLabelText("New admin password"), GOOD_PASSWORD);
+      await user.type(screen.getByLabelText("Repeat password"), GOOD_PASSWORD + "x");
+      await user.click(screen.getByRole("button", { name: "Add administrator" }));
+      expect(await screen.findByText("The passwords do not match.")).toBeInTheDocument();
+
+      await user.clear(screen.getByLabelText("New admin password"));
+      await user.clear(screen.getByLabelText("Repeat password"));
+      await user.type(screen.getByLabelText("New admin password"), "short");
+      await user.type(screen.getByLabelText("Repeat password"), "short");
+      await user.click(screen.getByRole("button", { name: "Add administrator" }));
+      expect(await screen.findByText("The password must be at least 12 characters.")).toBeInTheDocument();
+      expect(adminApi.createAdmin).not.toHaveBeenCalled();
+    });
+
+    it("shows the live password rules on every new-password field", async () => {
+      const user = userEvent.setup();
+      render(<SettingsScreen />);
+      for (const label of ["New password", "New admin password"]) {
+        expect(await screen.findByLabelText(label)).toHaveAccessibleDescription("At least 12 characters");
+      }
+      await user.type(screen.getByLabelText("New admin password"), GOOD_PASSWORD);
+      await user.type(screen.getByLabelText("Repeat password"), GOOD_PASSWORD);
+      expect(screen.getByLabelText("Repeat password")).toHaveAccessibleDescription("Passwords match");
+      const dialog = await openResetDialog(user);
+      expect(within(dialog).getByLabelText("New password")).toHaveAccessibleDescription("At least 12 characters");
     });
 
     it("removes an administrator only after confirmation", async () => {

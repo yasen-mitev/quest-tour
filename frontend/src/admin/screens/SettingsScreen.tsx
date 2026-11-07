@@ -136,8 +136,10 @@ function ChangePasswordSection() {
       <form onSubmit={submit} className="admin-form">
         <PasswordField label="Current password" value={current} onChange={setCurrent}
                        autoComplete="current-password" />
-        <PasswordField label="New password" value={next} onChange={setNext} autoComplete="new-password" />
-        <PasswordField label="Repeat new password" value={repeat} onChange={setRepeat} autoComplete="new-password" />
+        <PasswordField label="New password" value={next} onChange={setNext} autoComplete="new-password"
+                       minLength={MIN_PASSWORD_LENGTH} />
+        <PasswordField label="Repeat new password" value={repeat} onChange={setRepeat} autoComplete="new-password"
+                       matches={next} />
         <button className="qc-btn qc-btn--primary" type="submit">Change password</button>
         {error && <p className="qc-field__error">{error}</p>}
         {done && (
@@ -165,6 +167,9 @@ function AdministratorsSection({ me }: { me: string }) {
   const [resetDone, setResetDone] = useState<number | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [repeat, setRepeat] = useState("");
+  // Shown inside the add form, next to the fields it is about.
+  const [addError, setAddError] = useState<string | null>(null);
   const [resetting, setResetting] = useState<AdminUserOut | null>(null);
   const [resetError, setResetError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<AdminUserOut | null>(null);
@@ -185,14 +190,20 @@ function AdministratorsSection({ me }: { me: string }) {
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setAddError(null);
     setResetDone(null);
+    if (password !== repeat) return setAddError("The passwords do not match.");
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return setAddError(`The password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+    }
     try {
       await adminApi.createAdmin(email, password);
       setEmail("");
       setPassword("");
+      setRepeat("");
       await load();
     } catch (err) {
-      setError(failureMessage(err, "Could not add the administrator."));
+      setAddError(failureMessage(err, "Could not add the administrator."));
     }
   };
 
@@ -292,8 +303,11 @@ function AdministratorsSection({ me }: { me: string }) {
                  autoComplete="off" onChange={(e) => setEmail(e.target.value)} />
         </label>
         <PasswordField label="New admin password" value={password} onChange={setPassword}
-                       autoComplete="new-password" />
+                       autoComplete="new-password" minLength={MIN_PASSWORD_LENGTH} />
+        <PasswordField label="Repeat password" value={repeat} onChange={setRepeat}
+                       autoComplete="new-password" matches={password} />
         <button className="qc-btn qc-btn--primary" type="submit">Add administrator</button>
+        {addError && <p className="qc-field__error">{addError}</p>}
       </form>
       {resetting && (
         <ResetPasswordDialog

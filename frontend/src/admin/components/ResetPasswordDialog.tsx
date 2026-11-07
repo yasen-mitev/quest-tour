@@ -54,8 +54,9 @@ export function ResetPasswordDialog({
           The new password takes effect immediately. Give it to {email} yourself; they are not notified.
         </p>
         <PasswordField ref={firstRef} label="New password" value={password} onChange={setPassword}
-                       autoComplete="new-password" />
-        <PasswordField label="Repeat new password" value={repeat} onChange={setRepeat} autoComplete="new-password" />
+                       autoComplete="new-password" minLength={minLength} />
+        <PasswordField label="Repeat new password" value={repeat} onChange={setRepeat} autoComplete="new-password"
+                       matches={password} />
         {message && <p className="qc-field__error" role="alert">{message}</p>}
         <div className="qc-sheet__actions">
           <button type="submit" disabled={busy} className="qc-btn qc-btn--primary qc-btn--block">
