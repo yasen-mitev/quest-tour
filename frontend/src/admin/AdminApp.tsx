@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AdminLayout } from "./components/AdminLayout";
+import { AdministratorsScreen } from "./screens/AdministratorsScreen";
 import { AlbumsScreen } from "./screens/AlbumsScreen";
 import { Dashboard } from "./screens/Dashboard";
 import { FeedbackScreen } from "./screens/FeedbackScreen";
@@ -47,6 +48,9 @@ export function AdminApp({ path }: { path: string }) {
       break;
     case "feedback":
       screen = <FeedbackScreen />;
+      break;
+    case "administrators":
+      screen = <AdministratorsScreen />;
       break;
     default:
       screen = <AdminNotFound />;

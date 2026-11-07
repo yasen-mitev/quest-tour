@@ -6,7 +6,7 @@
 
 - Hosting on **Azure**, using Azure-native components for the web app, database, storage and roles.
 - v1 is a browser-based website; there are no native apps.
-- v1 has no admin UI; configuration comes from files (section 4).
+- v1 configuration comes from files (section 4); the admin panel and its sign-in are described in section 3.
 - Expected scale for v1 is small: a few teams per day and at most about 10 game runs at the same time. The design must still allow multiple hosts and a CMS to be added later.
 
 ## 2. Architecture
@@ -44,6 +44,10 @@ Estimated cost: about €25–40/month (to be confirmed in the Azure pricing cal
 - **404 handling.** FastAPI serves the React app only for known routes (e.g. `/`, `/play/{token}`). Any other path gets the 404 page with a real HTTP 404 status, not the usual single-page-app fallback that returns 200.
 - **Time limits are enforced on the server.** The maximum duration and validity window (R-8) are checked on every request, so the game ends correctly even if no phone is open.
 - **Multi-host readiness.** Every configuration table has a `host_id` column (R-20); v1 uses a single value.
+- **Admin sign-in.** The admin panel (`/admin`, API under `/api/admin`) signs in with e-mail and password by default. `ADMIN_AUTH_PROVIDER` selects one of three modes: `dev` (local magic link for `ADMIN_DEV_EMAILS`; the Python default, rejected in production), `password` (the Terraform default) and `entra` (password **and** Microsoft Entra sign-in, for upgraded legacy deployments). Admins live in the `admin_users` table (e-mail, argon2id password hash); runtime switches live in the `app_settings` table, currently the Entra on/off toggle. Entra can be enabled later from the Administrators screen if the `ADMIN_ENTRA_*` settings are configured; they are required only in `entra` mode. The first admin is seeded from `ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` (12 characters or more) on first start only. After that the database owns the password, and the recovery CLI is `admin-password --email <e-mail>`.
+  - `POST /api/admin/auth/password` signs in with e-mail and password (throttled in memory, per instance). `GET /api/admin/auth/provider` tells the login screen which sign-ins to offer; `login`, `callback` (Entra), `magic/request` and `magic/verify` (dev) and `logout` complete the set.
+  - `/api/admin/account/*` serves the signed-in admin: `auth-settings` (read the session provider, the signed-in e-mail and the Entra toggle, change the toggle), `password` (change own password), and `admins` (list, add, delete, and set another admin's password).
+  - The admin SPA's **Administrators** screen (`/admin/administrators`) is the UI for those endpoints: the list of administrators, Change my password, and the sign-in methods. A password change does not invalidate other sessions.
 
 ## 4. Configuration
 
@@ -71,7 +75,7 @@ Estimated cost: about €25–40/month (to be confirmed in the Azure pricing cal
 |---|---|---|
 | Player | Anyone with a valid game link | Player API for that assignment only |
 | Host | Host staff (Entra ID users) | Read/delete photos in Blob storage |
-| Admin | Operator (Entra ID users) | Runs `sync-config`; manages Azure resources |
+| Admin | Operator (admin panel: e-mail + password, optionally Entra ID; Azure: Entra ID users) | Runs `sync-config`; uses the admin panel; manages Azure resources |
 
 ## 7. Deployment and operations
 

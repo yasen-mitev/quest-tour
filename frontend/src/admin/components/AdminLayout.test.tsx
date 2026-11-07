@@ -28,6 +28,11 @@ describe("AdminLayout", () => {
     expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument();
   });
 
+  it("links to the Administrators screen", () => {
+    render(<AdminLayout active="dashboard">Content</AdminLayout>);
+    expect(screen.getByRole("link", { name: "Administrators" })).toHaveAttribute("href", "/admin/administrators");
+  });
+
   it("shows the running version at the foot of the sidebar (issue #29)", () => {
     render(<AdminLayout active="dashboard">Content</AdminLayout>);
     expect(screen.getByRole("contentinfo")).toHaveTextContent(versionLabel(APP_VERSION));

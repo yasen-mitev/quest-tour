@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { adminApi } from "../api";
-
-type Provider = "entra" | "dev";
+import { adminApi, HttpErrorWithBody, type AuthMethods } from "../api";
+import { PasswordField } from "../components/PasswordField";
 
 export function LoginScreen() {
-  const [provider, setProvider] = useState<Provider | null>(null);
+  const [methods, setMethods] = useState<AuthMethods | null>(null);
   const [providerError, setProviderError] = useState(false);
 
   useEffect(() => {
@@ -12,7 +11,7 @@ export function LoginScreen() {
     adminApi
       .authProvider()
       .then((res) => {
-        if (!cancelled) setProvider(res.provider);
+        if (!cancelled) setMethods(res.methods);
       })
       .catch(() => {
         if (!cancelled) setProviderError(true);
@@ -25,17 +24,63 @@ export function LoginScreen() {
   return (
     <div className="admin-login">
       <h1 className="t-title">Admin sign-in</h1>
-      {provider === "entra" && (
+      {methods?.password && <PasswordForm />}
+      {methods?.entra && (
         // Full-page navigation: the server redirects to Microsoft and back to /admin.
-        <a className="qc-btn qc-btn--primary" href="/api/admin/auth/login">
+        <a
+          className={`qc-btn ${methods.password ? "qc-btn--secondary" : "qc-btn--primary"}`}
+          href="/api/admin/auth/login"
+        >
           Sign in with Microsoft
         </a>
       )}
-      {provider === "dev" && <MagicLinkForm />}
+      {methods?.dev && <MagicLinkForm />}
       {providerError && (
         <p className="qc-field__error">Could not load the sign-in options. Please reload the page.</p>
       )}
     </div>
+  );
+}
+
+function PasswordForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      await adminApi.passwordLogin(email, password);
+      window.location.href = "/admin";
+    } catch (err) {
+      setError(
+        err instanceof HttpErrorWithBody && err.status === 429
+          ? "Too many attempts. Try again in a few minutes."
+          : "Invalid email or password.",
+      );
+    }
+  };
+
+  return (
+    <form onSubmit={submit}>
+      <label className="qc-field">
+        <span className="qc-field__label">Email</span>
+        <input
+          className="qc-input"
+          type="email"
+          value={email}
+          required
+          autoComplete="username"
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </label>
+      <PasswordField label="Password" value={password} onChange={setPassword} autoComplete="current-password" />
+      <button className="qc-btn qc-btn--primary" type="submit">
+        Sign in
+      </button>
+      {error && <p className="qc-field__error">{error}</p>}
+    </form>
   );
 }
 

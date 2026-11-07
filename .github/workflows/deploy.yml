@@ -49,6 +49,8 @@ jobs:
           TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          ADMIN_BOOTSTRAP_EMAIL: ${{ vars.ADMIN_BOOTSTRAP_EMAIL }}
+          ADMIN_BOOTSTRAP_PASSWORD: ${{ secrets.ADMIN_BOOTSTRAP_PASSWORD }}
         run: |
           if [ "$GITHUB_REF" != "refs/heads/main" ]; then
             echo "::error::Deploy only runs from main: the deploy identity trusts main only (infra/README.md)"; exit 1
@@ -56,6 +58,11 @@ jobs:
           for name in WEBAPP CLIENT_ID TENANT_ID SUBSCRIPTION_ID RESOURCE_GROUP; do
             if [ -z "${!name}" ]; then
               echo "::error::Repository variable for $name is not set; run infra/bootstrap/bootstrap.sh"; exit 1
+            fi
+          done
+          for name in ADMIN_BOOTSTRAP_EMAIL ADMIN_BOOTSTRAP_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name is not set in GitHub. Admin sign-in is now email + password: add variable ADMIN_BOOTSTRAP_EMAIL and secret ADMIN_BOOTSTRAP_PASSWORD before deploying (infra/README.md §3.1). Existing Entra deployments also set variable ADMIN_AUTH_PROVIDER=entra."; exit 1
             fi
           done
       - name: Show OIDC subject (compare with the federated credential if login fails)

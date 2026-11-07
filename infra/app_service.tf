@@ -56,6 +56,14 @@ resource "azurerm_linux_web_app" "app" {
   }
 
   lifecycle {
+    precondition {
+      condition     = can(regex("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", var.admin_bootstrap_email)) && length(var.admin_bootstrap_password) >= 12
+      error_message = "Set ADMIN_BOOTSTRAP_EMAIL (a valid email, GitHub variable) and ADMIN_BOOTSTRAP_PASSWORD (secret, >=12 chars) before deploying."
+    }
+    precondition {
+      condition     = var.admin_auth_provider != "entra" || (var.admin_entra_tenant_id != "" && var.admin_entra_client_id != "" && var.admin_entra_client_secret != "" && var.admin_entra_group_object_id != "")
+      error_message = "ADMIN_AUTH_PROVIDER=entra needs the ADMIN_ENTRA_* variables/secret."
+    }
     # default_hostname is only known after apply, so this cannot be a plan-time check block
     # (terraform test fails on those); a postcondition is deferred until the value is known.
     postcondition {

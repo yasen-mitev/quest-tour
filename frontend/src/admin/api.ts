@@ -18,6 +18,18 @@ import type {
 
 const ADMIN_TIMEOUT_MS = 15_000;
 
+export type AuthMethods = { password: boolean; entra: boolean; dev: boolean };
+export type AuthMode = "password" | "entra" | "dev";
+export type AuthSettings = {
+  mode: AuthMode;
+  entra_configured: boolean;
+  entra_enabled: boolean;
+  session_provider: AuthMode;
+  /** The signed-in admin, marked "You" in the administrators list. */
+  email: string;
+};
+export type AdminUserOut = { id: number; email: string; is_bootstrap: boolean };
+
 export class AdminUnauthorizedError extends Error {
   constructor() {
     super("admin unauthorized");
@@ -122,7 +134,21 @@ async function adminRequest<T>(
 
 export const adminApi = {
   authProvider: () =>
-    adminRequest<{ provider: "entra" | "dev" }>("/api/admin/auth/provider", undefined, "GET"),
+    adminRequest<{ provider: AuthMode; methods: AuthMethods }>("/api/admin/auth/provider", undefined, "GET"),
+  passwordLogin: (email: string, password: string) =>
+    adminRequest<{ ok: boolean }>("/api/admin/auth/password", { email, password }, "POST"),
+  authSettings: () => adminRequest<AuthSettings>("/api/admin/account/auth-settings", undefined, "GET"),
+  setEntraEnabled: (entra_enabled: boolean) =>
+    adminRequest<{ entra_enabled: boolean }>("/api/admin/account/auth-settings", { entra_enabled }, "PUT"),
+  changePassword: (current_password: string, new_password: string) =>
+    adminRequest<{ ok: boolean }>("/api/admin/account/password", { current_password, new_password }, "POST"),
+  listAdmins: () => adminRequest<AdminUserOut[]>("/api/admin/account/admins", undefined, "GET"),
+  createAdmin: (email: string, password: string) =>
+    adminRequest<AdminUserOut>("/api/admin/account/admins", { email, password }, "POST"),
+  deleteAdmin: (id: number) =>
+    adminRequest<{ ok: boolean }>(`/api/admin/account/admins/${id}`, undefined, "DELETE"),
+  resetAdminPassword: (id: number, password: string) =>
+    adminRequest<{ ok: boolean }>(`/api/admin/account/admins/${id}/password`, { password }, "PUT"),
   requestMagicLink: (email: string) =>
     adminRequest<{ url: string }>("/api/admin/auth/magic/request", { email }, "POST"),
   logout: () => adminRequest<{ ok: boolean }>("/api/admin/auth/logout", {}, "POST"),

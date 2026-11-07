@@ -30,6 +30,9 @@ const STROKED = {
   retry: <path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5" />,
   wifiOff: <><path d="M2 8.8a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0" /><circle cx="12" cy="19.5" r="1.2" fill="currentColor" stroke="none" /><path d="M3 3l18 18" /></>,
   brokenLink: <path d="M9 15l6-6M10.5 6.5l1-1a4.5 4.5 0 0 1 6.4 6.4l-1 1M13.5 17.5l-1 1a4.5 4.5 0 0 1-6.4-6.4l1-1M3 3l18 18" />,
+  ring: <circle cx="12" cy="12" r="6" />,
+  eye: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="3" /></>,
+  eyeOff: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="3" /><path d="M4 4l16 16" /></>,
 } satisfies Record<string, ReactElement>;
 
 export type IconName = keyof typeof FILLED | keyof typeof STROKED;     // a literal union, so icon-name typos fail `tsc`
