@@ -55,7 +55,7 @@ describe("SettingsScreen", () => {
     vi.mocked(adminApi.authSettings).mockResolvedValue(settings({ entra_configured: false }));
     render(<SettingsScreen />);
     expect(await screen.findByRole("checkbox", { name: "Microsoft Entra sign-in" })).toBeDisabled();
-    expect(screen.getByText(/ADMIN_ENTRA_\*/)).toBeInTheDocument();
+    expect(screen.getByText("Microsoft sign-in isn't set up on this server yet.")).toBeInTheDocument();
   });
 
   it("disables the toggle in dev mode", async () => {

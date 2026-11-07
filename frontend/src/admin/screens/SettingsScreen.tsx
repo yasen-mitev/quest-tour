@@ -79,19 +79,17 @@ function EntraSection({ settings }: { settings: AuthSettings }) {
     <section className="admin-group" aria-labelledby="settings-entra">
       <h2 className="t-subtitle" id="settings-entra">Sign-in methods</h2>
       <div className="admin-form">
-        <label className="qc-field">
-          <span className="qc-field__label">
-            <input
-              type="checkbox"
-              checked={enabled}
-              disabled={locked || busy}
-              onChange={(e) => toggle(e.target.checked)}
-            />{" "}
-            Microsoft Entra sign-in
-          </span>
+        <label className="admin-check">
+          <input
+            type="checkbox"
+            checked={enabled}
+            disabled={locked || busy}
+            onChange={(e) => toggle(e.target.checked)}
+          />
+          Microsoft Entra sign-in
         </label>
         {!settings.entra_configured && (
-          <p className="t-caption">Set the ADMIN_ENTRA_* deployment values and re-run Infra apply first.</p>
+          <p className="t-caption">Microsoft sign-in isn't set up on this server yet.</p>
         )}
         {settings.mode === "dev" && (
           <p className="t-caption">Sign-in is fixed to development mode on this server.</p>

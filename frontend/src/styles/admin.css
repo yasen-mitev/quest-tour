@@ -62,6 +62,11 @@
 .admin-section--narrow { max-width: 640px; }
 .admin-section--narrow .admin-list-item strong { overflow-wrap: anywhere; }
 .admin-section--narrow .admin-row-actions .qc-btn { white-space: nowrap; }
+/* Checkbox row: a 20px box centred on its bold label, in the accent colour */
+.admin-check { display: flex; align-items: center; gap: var(--space-3); font: 700 17px/22px var(--font-sans); cursor: pointer; }
+.admin-check input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--accent); cursor: inherit; }
+.admin-check input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.admin-check:has(input:disabled) { color: var(--ink-muted); cursor: not-allowed; }
 /* Password field: eye button inside the input's right edge (PasswordField) */
 .admin-password { position: relative; }
 .admin-password .qc-input { padding-right: 52px; }
