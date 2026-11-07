@@ -72,7 +72,7 @@ function EntraSection({ settings }: { settings: AuthSettings }) {
   };
 
   return (
-    <section className="admin-settings-group" aria-labelledby="settings-entra">
+    <section className="admin-group" aria-labelledby="settings-entra">
       <h2 className="t-subtitle" id="settings-entra">Sign-in methods</h2>
       <div className="admin-form">
         <label className="qc-field">
@@ -129,7 +129,7 @@ function ChangePasswordSection() {
   };
 
   return (
-    <section className="admin-settings-group" aria-labelledby="settings-password">
+    <section className="admin-group" aria-labelledby="settings-password">
       <h2 className="t-subtitle" id="settings-password">Change my password</h2>
       <form onSubmit={submit} className="admin-form">
         <label className="qc-field">
@@ -220,7 +220,7 @@ function AdministratorsSection() {
   };
 
   return (
-    <section className="admin-settings-group" aria-labelledby="settings-admins">
+    <section className="admin-group" aria-labelledby="settings-admins">
       <h2 className="t-subtitle" id="settings-admins">Administrators</h2>
       {error && <p className="qc-field__error">{error}</p>}
       {notice && <p className="t-body">{notice}</p>}

@@ -27,41 +27,45 @@ export function FeedbackScreen() {
       {!data && !error && !serverError && <p className="t-body">Loading…</p>}
       {data && (
         <>
-          <h2 className="t-body"><strong>Riddle ratings</strong></h2>
-          {data.riddles.length === 0 ? (
-            <p className="t-body">No riddle has been rated yet.</p>
-          ) : (
-            <ul className="admin-list" aria-label="Riddle ratings">
-              {data.riddles.map((r) => (
-                <li key={r.landmark_id} className="admin-list-item">
-                  <div>
-                    <strong className="t-body">{r.landmark_name}</strong>
-                    <span className="t-caption"> — {r.count} rating{r.count === 1 ? "" : "s"}</span>
-                  </div>
-                  <div className="admin-row-actions admin-rating">
-                    <StarsStatic value={r.average} />
-                    <span className="t-body"><strong>{r.average.toFixed(1)}</strong></span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-          <h2 className="t-body"><strong>Words from the teams</strong></h2>
-          {data.comments.length === 0 ? (
-            <p className="t-body">No team has left a comment yet.</p>
-          ) : (
-            <ul className="admin-list" aria-label="Team comments">
-              {data.comments.map((c) => (
-                <li key={c.id} className="admin-list-item admin-comment">
-                  <div>
-                    <strong className="t-body">{c.team_name}</strong>
-                    <span className="t-caption"> — {c.game_name} · {new Date(c.submitted_at).toLocaleString()}</span>
-                    <p className="t-body admin-comment__text">{c.text}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <section className="admin-group" aria-labelledby="feedback-riddles">
+            <h2 className="t-subtitle" id="feedback-riddles">Riddle ratings</h2>
+            {data.riddles.length === 0 ? (
+              <p className="t-body">No riddle has been rated yet.</p>
+            ) : (
+              <ul className="admin-list" aria-label="Riddle ratings">
+                {data.riddles.map((r) => (
+                  <li key={r.landmark_id} className="admin-list-item">
+                    <div>
+                      <strong className="t-body">{r.landmark_name}</strong>
+                      <span className="t-caption"> — {r.count} rating{r.count === 1 ? "" : "s"}</span>
+                    </div>
+                    <div className="admin-row-actions admin-rating">
+                      <StarsStatic value={r.average} />
+                      <span className="t-body"><strong>{r.average.toFixed(1)}</strong></span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+          <section className="admin-group" aria-labelledby="feedback-comments">
+            <h2 className="t-subtitle" id="feedback-comments">Words from the teams</h2>
+            {data.comments.length === 0 ? (
+              <p className="t-body">No team has left a comment yet.</p>
+            ) : (
+              <ul className="admin-list" aria-label="Team comments">
+                {data.comments.map((c) => (
+                  <li key={c.id} className="admin-list-item admin-comment">
+                    <div>
+                      <strong className="t-body">{c.team_name}</strong>
+                      <span className="t-caption"> — {c.game_name} · {new Date(c.submitted_at).toLocaleString()}</span>
+                      <p className="t-body admin-comment__text">{c.text}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </>
       )}
     </div>
