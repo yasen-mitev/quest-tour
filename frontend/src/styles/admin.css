@@ -58,7 +58,7 @@
 .admin-section h1 { margin: 0; font: 800 30px/34px var(--font-display); letter-spacing: -0.025em; }
 .t-subtitle { font: 800 20px/26px var(--font-display); letter-spacing: -0.02em; margin: 0 0 var(--space-3); }
 .admin-section .qc-field__error { display: block; }
-/* Form-led pages (Settings): lists share the 640px column of the .admin-form cards */
+/* Form-led pages (Administrators): lists share the 640px column of the .admin-form cards */
 .admin-section--narrow { max-width: 640px; }
 .admin-section--narrow .admin-list-item strong { overflow-wrap: anywhere; }
 .admin-section--narrow .admin-row-actions .qc-btn { white-space: nowrap; }
@@ -67,6 +67,9 @@
 .admin-check input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--accent); cursor: inherit; }
 .admin-check input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .admin-check:has(input:disabled) { color: var(--ink-muted); cursor: not-allowed; }
+/* Dialogs (sheets) sit above the page: positioned content later in the page, such as the password
+   fields' eye wrapper, would otherwise paint over an overlay that has no z-index of its own */
+.admin-shell .qs-overlay { z-index: 10; }
 /* Password field: eye button inside the input's right edge (PasswordField) */
 .admin-password { position: relative; }
 .admin-password .qc-input { padding-right: 52px; }
@@ -83,7 +86,7 @@
 .admin-rule svg { width: 16px; height: 16px; flex: none; }
 .admin-rule--met { color: var(--accent); font-weight: 700; }
 .admin-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-/* Success confirmation (Settings): accent ink with a check, under the row or form it confirms */
+/* Success confirmation (Administrators): accent ink with a check, under the row or form it confirms */
 .admin-success { display: flex; align-items: flex-start; gap: var(--space-2); margin: var(--space-1) 0 0; font: 700 15px/20px var(--font-sans); color: var(--accent); }
 .admin-success svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
 
@@ -113,7 +116,7 @@
 }
 .admin-form .qc-input { max-width: 100%; }
 .admin-form .qc-btn[type="submit"] { align-self: flex-start; }
-/* Titled groups (Settings, Feedback): heading, cards and messages spaced on one rhythm */
+/* Titled groups (Administrators, Feedback): heading, cards and messages spaced on one rhythm */
 .admin-group { display: grid; gap: var(--space-3); }
 .admin-group > .t-subtitle { margin: 0; }
 .admin-extra-fields { margin-top: var(--space-3); padding-top: var(--space-4); border-top: 2px solid var(--gold-500); }

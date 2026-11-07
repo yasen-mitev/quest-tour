@@ -17,6 +17,11 @@ vi.mock("./api", async (importOriginal) => ({
     teams: vi.fn().mockResolvedValue([]),
     teamAssignments: vi.fn().mockResolvedValue([]),
     listTeamPhotos: vi.fn().mockResolvedValue([]),
+    authSettings: vi.fn().mockResolvedValue({
+      mode: "password", entra_configured: false, entra_enabled: false, session_provider: "password",
+      email: "boss@example.com",
+    }),
+    listAdmins: vi.fn().mockResolvedValue([]),
   },
 }));
 
@@ -54,6 +59,17 @@ describe("AdminApp", () => {
       render(<AdminApp path="/admin/teams" />);
       await waitFor(() => expect(adminApi.teams).toHaveBeenCalled());
       expect(screen.getByRole("link", { name: "Teams" })).toHaveClass("active");
+    });
+
+    it("renders the Administrators screen for /admin/administrators", async () => {
+      render(<AdminApp path="/admin/administrators" />);
+      expect(await screen.findByRole("heading", { level: 1, name: "Administrators" })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Administrators" })).toHaveClass("active");
+    });
+
+    it("no longer serves the old /admin/settings path", () => {
+      render(<AdminApp path="/admin/settings" />);
+      expect(screen.getByText("Admin page not found")).toBeInTheDocument();
     });
 
     it("shows a not-found page for unknown admin routes", () => {

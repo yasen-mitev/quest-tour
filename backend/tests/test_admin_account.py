@@ -88,7 +88,7 @@ def test_auth_settings_reports_mode_session_provider_and_email(client):
 
 
 def test_auth_settings_email_is_the_stored_normalized_one(tmp_path, session_factory, blob_store):
-    # The Settings screen matches it against the admin list to mark "You".
+    # The Administrators screen matches it against the admin list to mark "You".
     with _client(_password_settings(tmp_path), session_factory, blob_store) as c:
         assert _login(c, email=BOSS.upper()).status_code == 200
         assert c.get(f"{BASE}/auth-settings").json()["email"] == BOSS

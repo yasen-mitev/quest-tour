@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { adminApi, HttpErrorWithBody, type AuthSettings } from "../api";
-import { SettingsScreen } from "./SettingsScreen";
+import { AdministratorsScreen } from "./AdministratorsScreen";
 
 vi.mock("../api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../api")>()),
@@ -30,7 +30,7 @@ function settings(over: Partial<AuthSettings> = {}): AuthSettings {
   };
 }
 
-describe("SettingsScreen", () => {
+describe("AdministratorsScreen", () => {
   beforeEach(() => {
     for (const fn of Object.values(adminApi)) vi.mocked(fn).mockReset();
     vi.mocked(adminApi.listAdmins).mockResolvedValue([
@@ -43,7 +43,7 @@ describe("SettingsScreen", () => {
     const user = userEvent.setup();
     vi.mocked(adminApi.authSettings).mockResolvedValue(settings());
     vi.mocked(adminApi.setEntraEnabled).mockResolvedValue({ entra_enabled: true });
-    render(<SettingsScreen />);
+    render(<AdministratorsScreen />);
     const box = await screen.findByRole("checkbox", { name: "Microsoft Entra sign-in" });
     expect(box).not.toBeChecked();
     await user.click(box);
@@ -53,14 +53,14 @@ describe("SettingsScreen", () => {
 
   it("disables the toggle and explains why when Entra is not configured", async () => {
     vi.mocked(adminApi.authSettings).mockResolvedValue(settings({ entra_configured: false }));
-    render(<SettingsScreen />);
+    render(<AdministratorsScreen />);
     expect(await screen.findByRole("checkbox", { name: "Microsoft Entra sign-in" })).toBeDisabled();
     expect(screen.getByText("Microsoft sign-in isn't set up on this server yet.")).toBeInTheDocument();
   });
 
   it("disables the toggle in dev mode", async () => {
     vi.mocked(adminApi.authSettings).mockResolvedValue(settings({ mode: "dev" }));
-    render(<SettingsScreen />);
+    render(<AdministratorsScreen />);
     expect(await screen.findByRole("checkbox", { name: "Microsoft Entra sign-in" })).toBeDisabled();
   });
 
@@ -70,7 +70,7 @@ describe("SettingsScreen", () => {
     vi.mocked(adminApi.setEntraEnabled).mockRejectedValue(
       new HttpErrorWithBody(409, { detail: "Cannot disable the last sign-in method" }),
     );
-    render(<SettingsScreen />);
+    render(<AdministratorsScreen />);
     const box = await screen.findByRole("checkbox", { name: "Microsoft Entra sign-in" });
     await user.click(box);
     expect(await screen.findByText("Cannot disable the last sign-in method")).toBeInTheDocument();
@@ -79,10 +79,10 @@ describe("SettingsScreen", () => {
 
   it("hides the password sections for an Entra session", async () => {
     vi.mocked(adminApi.authSettings).mockResolvedValue(settings({ session_provider: "entra" }));
-    render(<SettingsScreen />);
+    render(<AdministratorsScreen />);
     expect(await screen.findByText("Password admins are managed by a password admin.")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Change my password" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Administrators" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "All administrators" })).not.toBeInTheDocument();
     expect(adminApi.listAdmins).not.toHaveBeenCalled();
   });
 
@@ -98,7 +98,7 @@ describe("SettingsScreen", () => {
 
     it("rejects a mismatched repeat without calling the API", async () => {
       const user = userEvent.setup();
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       await fill(user, "old", GOOD_PASSWORD, GOOD_PASSWORD + "x");
       expect(await screen.findByText("The new passwords do not match.")).toBeInTheDocument();
       expect(adminApi.changePassword).not.toHaveBeenCalled();
@@ -106,7 +106,7 @@ describe("SettingsScreen", () => {
 
     it("rejects a short password without calling the API", async () => {
       const user = userEvent.setup();
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       await fill(user, "old", "short", "short");
       expect(await screen.findByText("The new password must be at least 12 characters.")).toBeInTheDocument();
       expect(adminApi.changePassword).not.toHaveBeenCalled();
@@ -115,7 +115,7 @@ describe("SettingsScreen", () => {
     it("changes the password", async () => {
       const user = userEvent.setup();
       vi.mocked(adminApi.changePassword).mockResolvedValue({ ok: true });
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       await fill(user, "old-password", GOOD_PASSWORD, GOOD_PASSWORD);
       expect(adminApi.changePassword).toHaveBeenCalledWith("old-password", GOOD_PASSWORD);
       const confirmation = await screen.findByText(
@@ -127,7 +127,7 @@ describe("SettingsScreen", () => {
     it("says the current password is wrong on a 400", async () => {
       const user = userEvent.setup();
       vi.mocked(adminApi.changePassword).mockRejectedValue(new HttpErrorWithBody(400, { detail: "bad" }));
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       await fill(user, "old", GOOD_PASSWORD, GOOD_PASSWORD);
       expect(await screen.findByText("Current password is wrong")).toBeInTheDocument();
     });
@@ -137,7 +137,7 @@ describe("SettingsScreen", () => {
       vi.mocked(adminApi.changePassword).mockRejectedValue(
         new HttpErrorWithBody(422, { errors: [{ field: "new_password", message: "Password is too common" }] }),
       );
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       await fill(user, "old", GOOD_PASSWORD, GOOD_PASSWORD);
       expect(await screen.findByText("Password is too common")).toBeInTheDocument();
     });
@@ -147,8 +147,8 @@ describe("SettingsScreen", () => {
     beforeEach(() => vi.mocked(adminApi.authSettings).mockResolvedValue(settings()));
 
     it("lists the administrators", async () => {
-      render(<SettingsScreen />);
-      const list = await screen.findByRole("list", { name: "Administrators" });
+      render(<AdministratorsScreen />);
+      const list = await screen.findByRole("list", { name: "All administrators" });
       const rows = within(list).getAllByRole("listitem");
       expect(rows).toHaveLength(2);
       expect(rows[0]).toHaveTextContent("boss@example.com");
@@ -156,8 +156,8 @@ describe("SettingsScreen", () => {
     });
 
     it("captions the first administrator and marks the signed-in admin as You, with Remove disabled", async () => {
-      render(<SettingsScreen />);
-      const list = await screen.findByRole("list", { name: "Administrators" });
+      render(<AdministratorsScreen />);
+      const list = await screen.findByRole("list", { name: "All administrators" });
       const [mine, other] = within(list).getAllByRole("listitem");
       expect(within(mine).getByText("First administrator · You")).toBeInTheDocument();
       expect(within(mine).getByRole("button", { name: "Reset password" })).toBeEnabled();
@@ -173,7 +173,7 @@ describe("SettingsScreen", () => {
     it("adds an administrator and refreshes the list", async () => {
       const user = userEvent.setup();
       vi.mocked(adminApi.createAdmin).mockResolvedValue({ id: 3, email: "new@example.com", is_bootstrap: false });
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       await user.type(await screen.findByLabelText("New admin email"), "new@example.com");
       await user.type(screen.getByLabelText("New admin password"), GOOD_PASSWORD);
       await user.type(screen.getByLabelText("Repeat password"), GOOD_PASSWORD);
@@ -185,7 +185,7 @@ describe("SettingsScreen", () => {
 
     it("does not add an administrator when the passwords differ or are too short", async () => {
       const user = userEvent.setup();
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       await user.type(await screen.findByLabelText("New admin email"), "new@example.com");
       await user.type(screen.getByLabelText("New admin password"), GOOD_PASSWORD);
       await user.type(screen.getByLabelText("Repeat password"), GOOD_PASSWORD + "x");
@@ -203,7 +203,7 @@ describe("SettingsScreen", () => {
 
     it("shows the live password rules on every new-password field", async () => {
       const user = userEvent.setup();
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       for (const label of ["New password", "New admin password"]) {
         expect(await screen.findByLabelText(label)).toHaveAccessibleDescription("At least 12 characters");
       }
@@ -217,8 +217,8 @@ describe("SettingsScreen", () => {
     it("removes an administrator only after confirmation", async () => {
       const user = userEvent.setup();
       vi.mocked(adminApi.deleteAdmin).mockResolvedValue({ ok: true });
-      render(<SettingsScreen />);
-      const list = await screen.findByRole("list", { name: "Administrators" });
+      render(<AdministratorsScreen />);
+      const list = await screen.findByRole("list", { name: "All administrators" });
       await user.click(within(within(list).getAllByRole("listitem")[1]).getByRole("button", { name: "Remove" }));
       expect(adminApi.deleteAdmin).not.toHaveBeenCalled();
       await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Remove" }));
@@ -231,8 +231,8 @@ describe("SettingsScreen", () => {
       vi.mocked(adminApi.deleteAdmin).mockRejectedValue(
         new HttpErrorWithBody(409, { detail: "the last admin cannot be removed" }),
       );
-      render(<SettingsScreen />);
-      const list = await screen.findByRole("list", { name: "Administrators" });
+      render(<AdministratorsScreen />);
+      const list = await screen.findByRole("list", { name: "All administrators" });
       await user.click(within(within(list).getAllByRole("listitem")[1]).getByRole("button", { name: "Remove" }));
       await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Remove" }));
       expect(await screen.findByText("the last admin cannot be removed")).toBeInTheDocument();
@@ -241,7 +241,7 @@ describe("SettingsScreen", () => {
 
     // Row 0 is boss@example.com (the signed-in admin), row 1 second@example.com.
     async function adminRow(index: number) {
-      const list = await screen.findByRole("list", { name: "Administrators" });
+      const list = await screen.findByRole("list", { name: "All administrators" });
       return within(list).getAllByRole("listitem")[index];
     }
 
@@ -262,7 +262,7 @@ describe("SettingsScreen", () => {
     it("resets an administrator's password in a dialog", async () => {
       const user = userEvent.setup();
       vi.mocked(adminApi.resetAdminPassword).mockResolvedValue({ ok: true });
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       const dialog = await openResetDialog(user);
       expect(within(dialog).getByLabelText("New password")).toHaveFocus();
       await user.type(within(dialog).getByLabelText("New password"), GOOD_PASSWORD);
@@ -281,7 +281,7 @@ describe("SettingsScreen", () => {
     it("confirms a reset of your own password for the next sign-in", async () => {
       const user = userEvent.setup();
       vi.mocked(adminApi.resetAdminPassword).mockResolvedValue({ ok: true });
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       await resetPassword(user, 0);
       expect(adminApi.resetAdminPassword).toHaveBeenCalledWith(1, GOOD_PASSWORD);
       expect(await within(await adminRow(0)).findByRole("status")).toHaveTextContent(
@@ -292,7 +292,7 @@ describe("SettingsScreen", () => {
     it("clears the reset confirmation on the next action", async () => {
       const user = userEvent.setup();
       vi.mocked(adminApi.resetAdminPassword).mockResolvedValue({ ok: true });
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       await resetPassword(user);
       expect(await within(await adminRow(1)).findByRole("status")).toBeInTheDocument();
       await user.click(within(await adminRow(1)).getByRole("button", { name: "Remove" }));
@@ -301,7 +301,7 @@ describe("SettingsScreen", () => {
 
     it("keeps the reset dialog open when the passwords differ or are too short", async () => {
       const user = userEvent.setup();
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       const dialog = await openResetDialog(user);
       await user.type(within(dialog).getByLabelText("New password"), GOOD_PASSWORD);
       await user.type(within(dialog).getByLabelText("Repeat new password"), GOOD_PASSWORD + "x");
@@ -319,7 +319,7 @@ describe("SettingsScreen", () => {
     it("shows a refused reset inside the dialog", async () => {
       const user = userEvent.setup();
       vi.mocked(adminApi.resetAdminPassword).mockRejectedValue(new Error("network"));
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       const dialog = await openResetDialog(user);
       await user.type(within(dialog).getByLabelText("New password"), GOOD_PASSWORD);
       await user.type(within(dialog).getByLabelText("Repeat new password"), GOOD_PASSWORD + "{Enter}");
@@ -329,7 +329,7 @@ describe("SettingsScreen", () => {
 
     it("closes the reset dialog on Cancel without calling the server", async () => {
       const user = userEvent.setup();
-      render(<SettingsScreen />);
+      render(<AdministratorsScreen />);
       const dialog = await openResetDialog(user);
       await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

@@ -24,32 +24,33 @@ function failureMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
-/** Sign-in settings (issue: password admins by default): the Microsoft Entra toggle, plus — for
- *  admins signed in with a password — their own password and the list of password administrators. */
-export function SettingsScreen() {
+/** Everything about the administrators of this panel (issue: password admins by default): for admins
+ *  signed in with a password, the list of password administrators and their own password; for
+ *  everyone, how administrators may sign in (the Microsoft Entra toggle). */
+export function AdministratorsScreen() {
   const [settings, setSettings] = useState<AuthSettings | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    adminApi.authSettings().then(setSettings).catch(() => setError("Could not load the settings."));
+    adminApi.authSettings().then(setSettings).catch(() => setError("Could not load the sign-in settings."));
   }, []);
 
   return (
     <div className="admin-section admin-section--narrow">
-      <h1 className="t-title">Settings</h1>
+      <h1 className="t-title">Administrators</h1>
       {error && <p className="qc-field__error">{error}</p>}
       {!settings && !error && <p className="t-body">Loading…</p>}
       {settings && (
         <>
-          <EntraSection settings={settings} />
           {settings.session_provider === "password" ? (
             <>
-              <ChangePasswordSection />
               <AdministratorsSection me={settings.email} />
+              <ChangePasswordSection />
             </>
           ) : (
             <p className="t-body">Password admins are managed by a password admin.</p>
           )}
+          <EntraSection settings={settings} />
         </>
       )}
     </div>
@@ -76,8 +77,8 @@ function EntraSection({ settings }: { settings: AuthSettings }) {
   };
 
   return (
-    <section className="admin-group" aria-labelledby="settings-entra">
-      <h2 className="t-subtitle" id="settings-entra">Sign-in methods</h2>
+    <section className="admin-group" aria-labelledby="admins-signin">
+      <h2 className="t-subtitle" id="admins-signin">Sign-in methods</h2>
       <div className="admin-form">
         <label className="admin-check">
           <input
@@ -131,8 +132,8 @@ function ChangePasswordSection() {
   };
 
   return (
-    <section className="admin-group" aria-labelledby="settings-password">
-      <h2 className="t-subtitle" id="settings-password">Change my password</h2>
+    <section className="admin-group" aria-labelledby="admins-password">
+      <h2 className="t-subtitle" id="admins-password">Change my password</h2>
       <form onSubmit={submit} className="admin-form">
         <PasswordField label="Current password" value={current} onChange={setCurrent}
                        autoComplete="current-password" />
@@ -253,11 +254,11 @@ function AdministratorsSection({ me }: { me: string }) {
   };
 
   return (
-    <section className="admin-group" aria-labelledby="settings-admins">
-      <h2 className="t-subtitle" id="settings-admins">Administrators</h2>
+    <section className="admin-group" aria-labelledby="admins-list">
+      <h2 className="t-subtitle" id="admins-list">All administrators</h2>
       {error && <p className="qc-field__error">{error}</p>}
       {admins && (
-        <ul className="admin-list" aria-label="Administrators">
+        <ul className="admin-list" aria-labelledby="admins-list">
           {admins.map((admin) => (
             <li key={admin.id} className="admin-list-item">
               <div>

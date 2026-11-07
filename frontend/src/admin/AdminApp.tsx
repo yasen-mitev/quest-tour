@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AdminLayout } from "./components/AdminLayout";
+import { AdministratorsScreen } from "./screens/AdministratorsScreen";
 import { AlbumsScreen } from "./screens/AlbumsScreen";
 import { Dashboard } from "./screens/Dashboard";
 import { FeedbackScreen } from "./screens/FeedbackScreen";
@@ -7,7 +8,6 @@ import { GamesScreen } from "./screens/GamesScreen";
 import { LandmarksScreen } from "./screens/LandmarksScreen";
 import { LoginScreen } from "./screens/LoginScreen";
 import { PhotosScreen } from "./screens/PhotosScreen";
-import { SettingsScreen } from "./screens/SettingsScreen";
 import { TeamsScreen } from "./screens/TeamsScreen";
 
 function AdminNotFound() {
@@ -49,8 +49,8 @@ export function AdminApp({ path }: { path: string }) {
     case "feedback":
       screen = <FeedbackScreen />;
       break;
-    case "settings":
-      screen = <SettingsScreen />;
+    case "administrators":
+      screen = <AdministratorsScreen />;
       break;
     default:
       screen = <AdminNotFound />;
