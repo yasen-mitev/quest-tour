@@ -82,7 +82,7 @@ describe("AdministratorsScreen", () => {
     render(<AdministratorsScreen />);
     expect(await screen.findByText("Password admins are managed by a password admin.")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Change my password" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "All administrators" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Accounts" })).not.toBeInTheDocument();
     expect(adminApi.listAdmins).not.toHaveBeenCalled();
   });
 
@@ -148,7 +148,7 @@ describe("AdministratorsScreen", () => {
 
     it("lists the administrators", async () => {
       render(<AdministratorsScreen />);
-      const list = await screen.findByRole("list", { name: "All administrators" });
+      const list = await screen.findByRole("list", { name: "Accounts" });
       const rows = within(list).getAllByRole("listitem");
       expect(rows).toHaveLength(2);
       expect(rows[0]).toHaveTextContent("boss@example.com");
@@ -157,7 +157,7 @@ describe("AdministratorsScreen", () => {
 
     it("captions the first administrator and marks the signed-in admin as You, with Remove disabled", async () => {
       render(<AdministratorsScreen />);
-      const list = await screen.findByRole("list", { name: "All administrators" });
+      const list = await screen.findByRole("list", { name: "Accounts" });
       const [mine, other] = within(list).getAllByRole("listitem");
       expect(within(mine).getByText("First administrator · You")).toBeInTheDocument();
       expect(within(mine).getByRole("button", { name: "Reset password" })).toBeEnabled();
@@ -171,7 +171,7 @@ describe("AdministratorsScreen", () => {
     });
 
     async function openAddDialog(user: ReturnType<typeof userEvent.setup>) {
-      await screen.findByRole("list", { name: "All administrators" });
+      await screen.findByRole("list", { name: "Accounts" });
       // Only a button under the list; the form lives in the dialog.
       expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Add administrator" }));
@@ -186,7 +186,7 @@ describe("AdministratorsScreen", () => {
       await user.type(within(dialog).getByLabelText("Email"), "new@example.com");
       await user.type(within(dialog).getByLabelText("Password"), password);
       await user.type(within(dialog).getByLabelText("Repeat password"), repeat);
-      await user.click(within(dialog).getByRole("button", { name: "Add administrator" }));
+      await user.click(within(dialog).getByRole("button", { name: "Add" }));
     }
 
     it("adds an administrator in a dialog and confirms it on the new row", async () => {
@@ -203,7 +203,7 @@ describe("AdministratorsScreen", () => {
       await fillAdd(user, dialog, GOOD_PASSWORD);
       expect(adminApi.createAdmin).toHaveBeenCalledWith("new@example.com", GOOD_PASSWORD);
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-      const list = screen.getByRole("list", { name: "All administrators" });
+      const list = screen.getByRole("list", { name: "Accounts" });
       await waitFor(() => expect(within(list).getAllByRole("listitem")).toHaveLength(3));
       expect(within(within(list).getAllByRole("listitem")[2]).getByRole("status")).toHaveTextContent(
         "Added. They aren't notified, so give them the password yourself.",
@@ -262,7 +262,7 @@ describe("AdministratorsScreen", () => {
       const user = userEvent.setup();
       vi.mocked(adminApi.deleteAdmin).mockResolvedValue({ ok: true });
       render(<AdministratorsScreen />);
-      const list = await screen.findByRole("list", { name: "All administrators" });
+      const list = await screen.findByRole("list", { name: "Accounts" });
       await user.click(within(within(list).getAllByRole("listitem")[1]).getByRole("button", { name: "Remove" }));
       expect(adminApi.deleteAdmin).not.toHaveBeenCalled();
       await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Remove" }));
@@ -276,7 +276,7 @@ describe("AdministratorsScreen", () => {
         new HttpErrorWithBody(409, { detail: "the last admin cannot be removed" }),
       );
       render(<AdministratorsScreen />);
-      const list = await screen.findByRole("list", { name: "All administrators" });
+      const list = await screen.findByRole("list", { name: "Accounts" });
       await user.click(within(within(list).getAllByRole("listitem")[1]).getByRole("button", { name: "Remove" }));
       await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Remove" }));
       expect(await screen.findByText("the last admin cannot be removed")).toBeInTheDocument();
@@ -285,7 +285,7 @@ describe("AdministratorsScreen", () => {
 
     // Row 0 is boss@example.com (the signed-in admin), row 1 second@example.com.
     async function adminRow(index: number) {
-      const list = await screen.findByRole("list", { name: "All administrators" });
+      const list = await screen.findByRole("list", { name: "Accounts" });
       return within(list).getAllByRole("listitem")[index];
     }
 

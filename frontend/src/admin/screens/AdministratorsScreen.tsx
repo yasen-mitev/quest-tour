@@ -261,7 +261,7 @@ function AdministratorsSection({ me }: { me: string }) {
 
   return (
     <section className="admin-group" aria-labelledby="admins-list">
-      <h2 className="t-subtitle" id="admins-list">All administrators</h2>
+      <h2 className="t-subtitle" id="admins-list">Accounts</h2>
       {error && <p className="qc-field__error">{error}</p>}
       {/* One card like the other sections: the admins as divided rows, the add button at the foot. */}
       <div className="admin-card">

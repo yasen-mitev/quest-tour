@@ -32,7 +32,7 @@ export function AddAdminDialog({ minLength, busy = false, error = null, onSubmit
     <SheetForm
       title="Add an administrator"
       note="They can sign in right away. Give them the password yourself; they are not notified."
-      submitLabel="Add administrator"
+      submitLabel="Add"
       busy={busy}
       error={invalid ?? error}
       onSubmit={submit}
