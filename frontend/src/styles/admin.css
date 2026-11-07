@@ -58,6 +58,10 @@
 .admin-section h1 { margin: 0; font: 800 30px/34px var(--font-display); letter-spacing: -0.025em; }
 .t-subtitle { font: 800 20px/26px var(--font-display); letter-spacing: -0.02em; margin: 0 0 var(--space-3); }
 .admin-section .qc-field__error { display: block; }
+/* Form-led pages (Settings): lists share the 640px column of the .admin-form cards */
+.admin-section--narrow { max-width: 640px; }
+.admin-section--narrow .admin-list-item strong { overflow-wrap: anywhere; }
+.admin-section--narrow .admin-row-actions .qc-btn { white-space: nowrap; }
 
 /* Top actions and filters */
 .admin-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }

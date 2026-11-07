@@ -60,6 +60,7 @@ def get_auth_settings(request: Request, admin: Annotated[AdminSession, Depends(r
         "entra_configured": settings.entra_configured,
         "entra_enabled": enabled,  # the stored toggle; the button shows only if also configured
         "session_provider": admin["provider"],
+        "email": admin["email"],  # the signed-in admin, marked "You" in the admin list
     }
 
 

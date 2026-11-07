@@ -77,13 +77,21 @@ def test_requires_session(tmp_path, session_factory, blob_store):
         assert c.post(f"{BASE}/password", json={}).status_code == 401
 
 
-def test_auth_settings_reports_mode_and_session_provider(client):
+def test_auth_settings_reports_mode_session_provider_and_email(client):
     assert client.get(f"{BASE}/auth-settings").json() == {
         "mode": "password",
         "entra_configured": False,
         "entra_enabled": False,
         "session_provider": "password",
+        "email": BOSS,
     }
+
+
+def test_auth_settings_email_is_the_stored_normalized_one(tmp_path, session_factory, blob_store):
+    # The Settings screen matches it against the admin list to mark "You".
+    with _client(_password_settings(tmp_path), session_factory, blob_store) as c:
+        assert _login(c, email=BOSS.upper()).status_code == 200
+        assert c.get(f"{BASE}/auth-settings").json()["email"] == BOSS
 
 
 def test_change_password_round_trip(client):
@@ -158,7 +166,8 @@ def test_reset_another_admins_password(client):
 
 def test_entra_session_is_forbidden_from_password_and_admin_routes(entra_session_client):
     c = entra_session_client
-    assert c.get(f"{BASE}/auth-settings").json()["session_provider"] == "entra"
+    me = c.get(f"{BASE}/auth-settings").json()
+    assert (me["session_provider"], me["email"]) == ("entra", "ent@example.com")
     body = {"current_password": "x", "new_password": "y" * 12}
     assert c.post(f"{BASE}/password", json=body).status_code == 403
     assert c.get(f"{BASE}/admins").status_code == 403

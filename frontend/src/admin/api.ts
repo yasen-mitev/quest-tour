@@ -25,6 +25,8 @@ export type AuthSettings = {
   entra_configured: boolean;
   entra_enabled: boolean;
   session_provider: AuthMode;
+  /** The signed-in admin, marked "You" in the administrators list. */
+  email: string;
 };
 export type AdminUserOut = { id: number; email: string; is_bootstrap: boolean };
 

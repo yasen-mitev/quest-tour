@@ -20,7 +20,14 @@ vi.mock("../api", async (importOriginal) => ({
 const GOOD_PASSWORD = "a-long-enough-password";
 
 function settings(over: Partial<AuthSettings> = {}): AuthSettings {
-  return { mode: "password", entra_configured: true, entra_enabled: false, session_provider: "password", ...over };
+  return {
+    mode: "password",
+    entra_configured: true,
+    entra_enabled: false,
+    session_provider: "password",
+    email: "boss@example.com",
+    ...over,
+  };
 }
 
 describe("SettingsScreen", () => {
@@ -145,6 +152,21 @@ describe("SettingsScreen", () => {
       expect(rows[1]).toHaveTextContent("second@example.com");
     });
 
+    it("captions the first administrator and marks the signed-in admin as You, with Remove disabled", async () => {
+      render(<SettingsScreen />);
+      const list = await screen.findByRole("list", { name: "Administrators" });
+      const [mine, other] = within(list).getAllByRole("listitem");
+      expect(within(mine).getByText("First administrator · You")).toBeInTheDocument();
+      expect(within(mine).getByRole("button", { name: "Reset password" })).toBeEnabled();
+      // Kept but disabled, so the button columns line up; the reason is in a tooltip and for screen readers.
+      const removeMine = within(mine).getByRole("button", { name: "Remove" });
+      expect(removeMine).toBeDisabled();
+      expect(removeMine).toHaveAttribute("title", "You cannot remove yourself");
+      expect(removeMine).toHaveAccessibleDescription("You cannot remove yourself");
+      expect(within(other).queryByText(/First administrator|You/)).not.toBeInTheDocument();
+      expect(within(other).getByRole("button", { name: "Remove" })).toBeEnabled();
+    });
+
     it("adds an administrator and refreshes the list", async () => {
       const user = userEvent.setup();
       vi.mocked(adminApi.createAdmin).mockResolvedValue({ id: 3, email: "new@example.com", is_bootstrap: false });
@@ -171,13 +193,13 @@ describe("SettingsScreen", () => {
     it("shows the server's reason when a removal is refused", async () => {
       const user = userEvent.setup();
       vi.mocked(adminApi.deleteAdmin).mockRejectedValue(
-        new HttpErrorWithBody(409, { detail: "Cannot remove the bootstrap admin" }),
+        new HttpErrorWithBody(409, { detail: "the last admin cannot be removed" }),
       );
       render(<SettingsScreen />);
       const list = await screen.findByRole("list", { name: "Administrators" });
-      await user.click(within(within(list).getAllByRole("listitem")[0]).getByRole("button", { name: "Remove" }));
+      await user.click(within(within(list).getAllByRole("listitem")[1]).getByRole("button", { name: "Remove" }));
       await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Remove" }));
-      expect(await screen.findByText("Cannot remove the bootstrap admin")).toBeInTheDocument();
+      expect(await screen.findByText("the last admin cannot be removed")).toBeInTheDocument();
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
 

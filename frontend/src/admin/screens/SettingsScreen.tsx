@@ -4,6 +4,7 @@ import { ConfirmDialog } from "../components/ConfirmDialog";
 import { ResetPasswordDialog } from "../components/ResetPasswordDialog";
 
 const MIN_PASSWORD_LENGTH = 12;
+const SELF_REMOVE_REASON = "You cannot remove yourself";
 
 /** The message to show for a failed settings call: the server's own reason for a 409, its first
  *  validation message for a 422, otherwise the screen's fallback. */
@@ -32,7 +33,7 @@ export function SettingsScreen() {
   }, []);
 
   return (
-    <div className="admin-section">
+    <div className="admin-section admin-section--narrow">
       <h1 className="t-title">Settings</h1>
       {error && <p className="qc-field__error">{error}</p>}
       {!settings && !error && <p className="t-body">Loading…</p>}
@@ -42,7 +43,7 @@ export function SettingsScreen() {
           {settings.session_provider === "password" ? (
             <>
               <ChangePasswordSection />
-              <AdministratorsSection />
+              <AdministratorsSection me={settings.email} />
             </>
           ) : (
             <p className="t-body">Password admins are managed by a password admin.</p>
@@ -156,7 +157,14 @@ function ChangePasswordSection() {
   );
 }
 
-function AdministratorsSection() {
+/** The line under an admin's email: "First administrator", "You", both, or nothing. */
+function rowCaption(admin: AdminUserOut, me: string): string {
+  return [admin.is_bootstrap && "First administrator", admin.email === me && "You"]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function AdministratorsSection({ me }: { me: string }) {
   const [admins, setAdmins] = useState<AdminUserOut[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -243,15 +251,27 @@ function AdministratorsSection() {
             <li key={admin.id} className="admin-list-item">
               <div>
                 <strong className="t-body">{admin.email}</strong>
-                {admin.is_bootstrap && <span className="t-caption"> — first administrator</span>}
+                {rowCaption(admin, me) && <p className="t-caption">{rowCaption(admin, me)}</p>}
               </div>
               <div className="admin-row-actions">
                 <button type="button" className="qc-btn qc-btn--secondary" onClick={() => openReset(admin)}>
                   Reset password
                 </button>
-                <button type="button" className="qc-btn qc-btn--secondary" onClick={() => setRemoving(admin)}>
-                  Remove
-                </button>
+                {/* The server refuses to remove the signed-in admin. The button stays (disabled) so the
+                    button columns line up; the reason is a tooltip and the screen-reader description. */}
+                {admin.email === me ? (
+                  <>
+                    <button type="button" className="qc-btn qc-btn--secondary" disabled
+                            title={SELF_REMOVE_REASON} aria-describedby={`admin-${admin.id}-no-remove`}>
+                      Remove
+                    </button>
+                    <span id={`admin-${admin.id}-no-remove`} hidden>{SELF_REMOVE_REASON}</span>
+                  </>
+                ) : (
+                  <button type="button" className="qc-btn qc-btn--secondary" onClick={() => setRemoving(admin)}>
+                    Remove
+                  </button>
+                )}
               </div>
             </li>
           ))}
