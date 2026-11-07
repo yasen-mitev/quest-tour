@@ -39,9 +39,18 @@ terminal: it writes `backend/.env` (SQLite + local file storage, with a seeded
 `ADMIN_DEV_EMAILS=admin@example.com`) on first run, installs dependencies,
 migrates, runs `sync-config` (which prints the team game links), then starts
 uvicorn and the Vite dev server together. The startup summary also prints the
-admin panel URL and the suggested dev sign-in email. Ctrl-C stops both; every
-output line is tagged `[backend]` or `[frontend]` so the interleaved logs stay
-readable.
+admin panel URL and how to sign in for the active admin auth mode. Ctrl-C stops
+both; every output line is tagged `[backend]` or `[frontend]` so the interleaved
+logs stay readable.
+
+Each run starts from a fresh SQLite database; `--keep-db` keeps the existing one.
+`--auth password` runs the admin panel with e-mail and password sign-in for this
+run (`ADMIN_AUTH_PROVIDER=password`). Unless you set `ADMIN_BOOTSTRAP_EMAIL` and
+`ADMIN_BOOTSTRAP_PASSWORD` yourself, it seeds `admin@example.com` with the
+throwaway password `dev-password-123`. `--auth entra` also needs the
+`ADMIN_ENTRA_*` settings. Without `--auth`, the mode comes from the environment or
+`backend/.env` (the default is the `dev` magic link). The script checks the
+required settings before the setup steps run.
 
 ## Docker dev path
 
