@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { adminApi, HttpErrorWithBody, type AdminUserOut, type AuthSettings } from "../api";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { ResetPasswordDialog } from "../components/ResetPasswordDialog";
+import { Icon } from "../../components/Icon";
 
 const MIN_PASSWORD_LENGTH = 12;
 const SELF_REMOVE_REASON = "You cannot remove yourself";
@@ -151,7 +152,12 @@ function ChangePasswordSection() {
         </label>
         <button className="qc-btn qc-btn--primary" type="submit">Change password</button>
         {error && <p className="qc-field__error">{error}</p>}
-        {done && <p className="t-body">Password changed.</p>}
+        {done && (
+          <p className="admin-success" role="status">
+            <Icon name="check" />
+            Your password was changed. Other devices where you're signed in stay signed in.
+          </p>
+        )}
       </form>
     </section>
   );
@@ -167,7 +173,8 @@ function rowCaption(admin: AdminUserOut, me: string): string {
 function AdministratorsSection({ me }: { me: string }) {
   const [admins, setAdmins] = useState<AdminUserOut[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  // The row whose password was just set; its confirmation stays until the next action here.
+  const [resetDone, setResetDone] = useState<number | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [resetting, setResetting] = useState<AdminUserOut | null>(null);
@@ -190,7 +197,7 @@ function AdministratorsSection({ me }: { me: string }) {
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setNotice(null);
+    setResetDone(null);
     try {
       await adminApi.createAdmin(email, password);
       setEmail("");
@@ -201,10 +208,16 @@ function AdministratorsSection({ me }: { me: string }) {
     }
   };
 
+  const openRemove = (admin: AdminUserOut) => {
+    setError(null);
+    setResetDone(null);
+    setRemoving(admin);
+  };
+
   const remove = async () => {
     if (!removing) return;
     setError(null);
-    setNotice(null);
+    setResetDone(null);
     setBusy(true);
     try {
       await adminApi.deleteAdmin(removing.id);
@@ -219,7 +232,7 @@ function AdministratorsSection({ me }: { me: string }) {
 
   const openReset = (admin: AdminUserOut) => {
     setError(null);
-    setNotice(null);
+    setResetDone(null);
     setResetError(null);
     setResetting(admin);
   };
@@ -231,7 +244,7 @@ function AdministratorsSection({ me }: { me: string }) {
     setBusy(true);
     try {
       await adminApi.resetAdminPassword(resetting.id, password);
-      setNotice(`Password reset for ${resetting.email}.`);
+      setResetDone(resetting.id);
       setResetting(null);
     } catch (err) {
       setResetError(failureMessage(err, "Could not reset the password."));
@@ -244,7 +257,6 @@ function AdministratorsSection({ me }: { me: string }) {
     <section className="admin-group" aria-labelledby="settings-admins">
       <h2 className="t-subtitle" id="settings-admins">Administrators</h2>
       {error && <p className="qc-field__error">{error}</p>}
-      {notice && <p className="t-body">{notice}</p>}
       {admins && (
         <ul className="admin-list" aria-label="Administrators">
           {admins.map((admin) => (
@@ -252,6 +264,14 @@ function AdministratorsSection({ me }: { me: string }) {
               <div>
                 <strong className="t-body">{admin.email}</strong>
                 {rowCaption(admin, me) && <p className="t-caption">{rowCaption(admin, me)}</p>}
+                {resetDone === admin.id && (
+                  <p className="admin-success" role="status">
+                    <Icon name="check" />
+                    {admin.email === me
+                      ? "New password set. Use it the next time you sign in."
+                      : "New password set. They aren't notified, so give it to them yourself."}
+                  </p>
+                )}
               </div>
               <div className="admin-row-actions">
                 <button type="button" className="qc-btn qc-btn--secondary" onClick={() => openReset(admin)}>
@@ -268,7 +288,7 @@ function AdministratorsSection({ me }: { me: string }) {
                     <span id={`admin-${admin.id}-no-remove`} hidden>{SELF_REMOVE_REASON}</span>
                   </>
                 ) : (
-                  <button type="button" className="qc-btn qc-btn--secondary" onClick={() => setRemoving(admin)}>
+                  <button type="button" className="qc-btn qc-btn--secondary" onClick={() => openRemove(admin)}>
                     Remove
                   </button>
                 )}

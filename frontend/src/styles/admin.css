@@ -62,6 +62,9 @@
 .admin-section--narrow { max-width: 640px; }
 .admin-section--narrow .admin-list-item strong { overflow-wrap: anywhere; }
 .admin-section--narrow .admin-row-actions .qc-btn { white-space: nowrap; }
+/* Success confirmation (Settings): accent ink with a check, under the row or form it confirms */
+.admin-success { display: flex; align-items: flex-start; gap: var(--space-2); margin: var(--space-1) 0 0; font: 700 15px/20px var(--font-sans); color: var(--accent); }
+.admin-success svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
 
 /* Top actions and filters */
 .admin-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }

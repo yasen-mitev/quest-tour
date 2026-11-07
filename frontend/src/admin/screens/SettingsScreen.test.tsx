@@ -118,7 +118,9 @@ describe("SettingsScreen", () => {
       render(<SettingsScreen />);
       await fill(user, "old-password", GOOD_PASSWORD, GOOD_PASSWORD);
       expect(adminApi.changePassword).toHaveBeenCalledWith("old-password", GOOD_PASSWORD);
-      expect(await screen.findByText("Password changed.")).toBeInTheDocument();
+      expect(await screen.findByRole("status")).toHaveTextContent(
+        "Your password was changed. Other devices where you're signed in stay signed in.",
+      );
     });
 
     it("says the current password is wrong on a 400", async () => {
@@ -203,12 +205,24 @@ describe("SettingsScreen", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
 
-    async function openResetDialog(user: ReturnType<typeof userEvent.setup>) {
+    // Row 0 is boss@example.com (the signed-in admin), row 1 second@example.com.
+    async function adminRow(index: number) {
       const list = await screen.findByRole("list", { name: "Administrators" });
-      const row = within(list).getAllByRole("listitem")[1];
+      return within(list).getAllByRole("listitem")[index];
+    }
+
+    async function openResetDialog(user: ReturnType<typeof userEvent.setup>, index = 1) {
+      const row = await adminRow(index);
       expect(within(row).queryByLabelText(/password/i)).not.toBeInTheDocument();
       await user.click(within(row).getByRole("button", { name: "Reset password" }));
-      return screen.getByRole("dialog", { name: "Reset password for second@example.com" });
+      const email = index === 0 ? "boss@example.com" : "second@example.com";
+      return screen.getByRole("dialog", { name: `Reset password for ${email}` });
+    }
+
+    async function resetPassword(user: ReturnType<typeof userEvent.setup>, index = 1) {
+      const dialog = await openResetDialog(user, index);
+      await user.type(within(dialog).getByLabelText("New password"), GOOD_PASSWORD);
+      await user.type(within(dialog).getByLabelText("Repeat new password"), GOOD_PASSWORD + "{Enter}");
     }
 
     it("resets an administrator's password in a dialog", async () => {
@@ -221,8 +235,34 @@ describe("SettingsScreen", () => {
       await user.type(within(dialog).getByLabelText("Repeat new password"), GOOD_PASSWORD);
       await user.click(within(dialog).getByRole("button", { name: "Reset password" }));
       expect(adminApi.resetAdminPassword).toHaveBeenCalledWith(2, GOOD_PASSWORD);
-      expect(await screen.findByText("Password reset for second@example.com.")).toBeInTheDocument();
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      // Confirmed on the row that changed, with what to do next; nothing at the top of the section.
+      expect(await within(await adminRow(1)).findByRole("status")).toHaveTextContent(
+        "New password set. They aren't notified, so give it to them yourself.",
+      );
+      expect(within(await adminRow(0)).queryByRole("status")).not.toBeInTheDocument();
+      expect(screen.queryByText(/Password reset for/)).not.toBeInTheDocument();
+    });
+
+    it("confirms a reset of your own password for the next sign-in", async () => {
+      const user = userEvent.setup();
+      vi.mocked(adminApi.resetAdminPassword).mockResolvedValue({ ok: true });
+      render(<SettingsScreen />);
+      await resetPassword(user, 0);
+      expect(adminApi.resetAdminPassword).toHaveBeenCalledWith(1, GOOD_PASSWORD);
+      expect(await within(await adminRow(0)).findByRole("status")).toHaveTextContent(
+        "New password set. Use it the next time you sign in.",
+      );
+    });
+
+    it("clears the reset confirmation on the next action", async () => {
+      const user = userEvent.setup();
+      vi.mocked(adminApi.resetAdminPassword).mockResolvedValue({ ok: true });
+      render(<SettingsScreen />);
+      await resetPassword(user);
+      expect(await within(await adminRow(1)).findByRole("status")).toBeInTheDocument();
+      await user.click(within(await adminRow(1)).getByRole("button", { name: "Remove" }));
+      expect(within(await adminRow(1)).queryByRole("status")).not.toBeInTheDocument();
     });
 
     it("keeps the reset dialog open when the passwords differ or are too short", async () => {
