@@ -170,48 +170,92 @@ describe("AdministratorsScreen", () => {
       expect(within(other).getByRole("button", { name: "Remove" })).toBeEnabled();
     });
 
-    it("adds an administrator and refreshes the list", async () => {
-      const user = userEvent.setup();
-      vi.mocked(adminApi.createAdmin).mockResolvedValue({ id: 3, email: "new@example.com", is_bootstrap: false });
-      render(<AdministratorsScreen />);
-      await user.type(await screen.findByLabelText("New admin email"), "new@example.com");
-      await user.type(screen.getByLabelText("New admin password"), GOOD_PASSWORD);
-      await user.type(screen.getByLabelText("Repeat password"), GOOD_PASSWORD);
+    async function openAddDialog(user: ReturnType<typeof userEvent.setup>) {
+      await screen.findByRole("list", { name: "All administrators" });
+      // Only a button under the list; the form lives in the dialog.
+      expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Add administrator" }));
+      const dialog = screen.getByRole("dialog", { name: "Add an administrator" });
+      expect(within(dialog).getByLabelText("Email")).toHaveFocus();
+      return dialog;
+    }
+
+    async function fillAdd(
+      user: ReturnType<typeof userEvent.setup>, dialog: HTMLElement, password: string, repeat = password,
+    ) {
+      await user.type(within(dialog).getByLabelText("Email"), "new@example.com");
+      await user.type(within(dialog).getByLabelText("Password"), password);
+      await user.type(within(dialog).getByLabelText("Repeat password"), repeat);
+      await user.click(within(dialog).getByRole("button", { name: "Add administrator" }));
+    }
+
+    it("adds an administrator in a dialog and confirms it on the new row", async () => {
+      const user = userEvent.setup();
+      const created = { id: 3, email: "new@example.com", is_bootstrap: false };
+      vi.mocked(adminApi.createAdmin).mockResolvedValue(created);
+      render(<AdministratorsScreen />);
+      const dialog = await openAddDialog(user);
+      vi.mocked(adminApi.listAdmins).mockResolvedValue([
+        { id: 1, email: "boss@example.com", is_bootstrap: true },
+        { id: 2, email: "second@example.com", is_bootstrap: false },
+        created,
+      ]);
+      await fillAdd(user, dialog, GOOD_PASSWORD);
       expect(adminApi.createAdmin).toHaveBeenCalledWith("new@example.com", GOOD_PASSWORD);
-      await waitFor(() => expect(adminApi.listAdmins).toHaveBeenCalledTimes(2));
-      expect(screen.getByLabelText("Repeat password")).toHaveValue("");
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      const list = screen.getByRole("list", { name: "All administrators" });
+      await waitFor(() => expect(within(list).getAllByRole("listitem")).toHaveLength(3));
+      expect(within(within(list).getAllByRole("listitem")[2]).getByRole("status")).toHaveTextContent(
+        "Added. They aren't notified, so give them the password yourself.",
+      );
     });
 
-    it("does not add an administrator when the passwords differ or are too short", async () => {
+    it("keeps the add dialog open when the passwords differ or are too short", async () => {
       const user = userEvent.setup();
       render(<AdministratorsScreen />);
-      await user.type(await screen.findByLabelText("New admin email"), "new@example.com");
-      await user.type(screen.getByLabelText("New admin password"), GOOD_PASSWORD);
-      await user.type(screen.getByLabelText("Repeat password"), GOOD_PASSWORD + "x");
-      await user.click(screen.getByRole("button", { name: "Add administrator" }));
-      expect(await screen.findByText("The passwords do not match.")).toBeInTheDocument();
+      const dialog = await openAddDialog(user);
+      await fillAdd(user, dialog, GOOD_PASSWORD, GOOD_PASSWORD + "x");
+      expect(within(dialog).getByText("The passwords do not match.")).toBeInTheDocument();
 
-      await user.clear(screen.getByLabelText("New admin password"));
-      await user.clear(screen.getByLabelText("Repeat password"));
-      await user.type(screen.getByLabelText("New admin password"), "short");
-      await user.type(screen.getByLabelText("Repeat password"), "short");
-      await user.click(screen.getByRole("button", { name: "Add administrator" }));
-      expect(await screen.findByText("The password must be at least 12 characters.")).toBeInTheDocument();
+      for (const label of ["Email", "Password", "Repeat password"]) await user.clear(within(dialog).getByLabelText(label));
+      await fillAdd(user, dialog, "short");
+      expect(within(dialog).getByText("The password must be at least 12 characters.")).toBeInTheDocument();
+      expect(adminApi.createAdmin).not.toHaveBeenCalled();
+    });
+
+    it("shows a refused add inside the dialog", async () => {
+      const user = userEvent.setup();
+      vi.mocked(adminApi.createAdmin).mockRejectedValue(
+        new HttpErrorWithBody(409, { detail: "an admin with this email already exists" }),
+      );
+      render(<AdministratorsScreen />);
+      const dialog = await openAddDialog(user);
+      await fillAdd(user, dialog, GOOD_PASSWORD);
+      expect(await within(dialog).findByText("an admin with this email already exists")).toBeInTheDocument();
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+
+    it("closes the add dialog on Cancel without calling the server", async () => {
+      const user = userEvent.setup();
+      render(<AdministratorsScreen />);
+      const dialog = await openAddDialog(user);
+      await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(adminApi.createAdmin).not.toHaveBeenCalled();
     });
 
     it("shows the live password rules on every new-password field", async () => {
       const user = userEvent.setup();
       render(<AdministratorsScreen />);
-      for (const label of ["New password", "New admin password"]) {
-        expect(await screen.findByLabelText(label)).toHaveAccessibleDescription("At least 12 characters");
-      }
-      await user.type(screen.getByLabelText("New admin password"), GOOD_PASSWORD);
-      await user.type(screen.getByLabelText("Repeat password"), GOOD_PASSWORD);
-      expect(screen.getByLabelText("Repeat password")).toHaveAccessibleDescription("Passwords match");
-      const dialog = await openResetDialog(user);
-      expect(within(dialog).getByLabelText("New password")).toHaveAccessibleDescription("At least 12 characters");
+      expect(await screen.findByLabelText("New password")).toHaveAccessibleDescription("At least 12 characters");
+      const add = await openAddDialog(user);
+      expect(within(add).getByLabelText("Password")).toHaveAccessibleDescription("At least 12 characters");
+      await user.type(within(add).getByLabelText("Password"), GOOD_PASSWORD);
+      await user.type(within(add).getByLabelText("Repeat password"), GOOD_PASSWORD);
+      expect(within(add).getByLabelText("Repeat password")).toHaveAccessibleDescription("Passwords match");
+      await user.click(within(add).getByRole("button", { name: "Cancel" }));
+      const reset = await openResetDialog(user);
+      expect(within(reset).getByLabelText("New password")).toHaveAccessibleDescription("At least 12 characters");
     });
 
     it("removes an administrator only after confirmation", async () => {

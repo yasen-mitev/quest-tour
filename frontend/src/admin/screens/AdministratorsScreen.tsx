@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminApi, HttpErrorWithBody, type AdminUserOut, type AuthSettings } from "../api";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { AddAdminDialog } from "../components/AddAdminDialog";
 import { PasswordField } from "../components/PasswordField";
 import { ResetPasswordDialog } from "../components/ResetPasswordDialog";
 import { Icon } from "../../components/Icon";
@@ -164,12 +165,9 @@ function rowCaption(admin: AdminUserOut, me: string): string {
 function AdministratorsSection({ me }: { me: string }) {
   const [admins, setAdmins] = useState<AdminUserOut[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // The row whose password was just set; its confirmation stays until the next action here.
-  const [resetDone, setResetDone] = useState<number | null>(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [repeat, setRepeat] = useState("");
-  // Shown inside the add form, next to the fields it is about.
+  // A confirmation on the row just added or changed; it stays until the next action here.
+  const [rowNotice, setRowNotice] = useState<{ id: number; text: string } | null>(null);
+  const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [resetting, setResetting] = useState<AdminUserOut | null>(null);
   const [resetError, setResetError] = useState<string | null>(null);
@@ -188,36 +186,39 @@ function AdministratorsSection({ me }: { me: string }) {
     load();
   }, [load]);
 
-  const add = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const openAdd = () => {
     setError(null);
+    setRowNotice(null);
     setAddError(null);
-    setResetDone(null);
-    if (password !== repeat) return setAddError("The passwords do not match.");
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      return setAddError(`The password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
-    }
+    setAdding(true);
+  };
+
+  // Failures stay in the dialog, so the admin can correct the entry and retry.
+  const add = async (email: string, password: string) => {
+    setAddError(null);
+    setBusy(true);
     try {
-      await adminApi.createAdmin(email, password);
-      setEmail("");
-      setPassword("");
-      setRepeat("");
+      const created = await adminApi.createAdmin(email, password);
+      setAdding(false);
+      setRowNotice({ id: created.id, text: "Added. They aren't notified, so give them the password yourself." });
       await load();
     } catch (err) {
       setAddError(failureMessage(err, "Could not add the administrator."));
+    } finally {
+      setBusy(false);
     }
   };
 
   const openRemove = (admin: AdminUserOut) => {
     setError(null);
-    setResetDone(null);
+    setRowNotice(null);
     setRemoving(admin);
   };
 
   const remove = async () => {
     if (!removing) return;
     setError(null);
-    setResetDone(null);
+    setRowNotice(null);
     setBusy(true);
     try {
       await adminApi.deleteAdmin(removing.id);
@@ -232,7 +233,7 @@ function AdministratorsSection({ me }: { me: string }) {
 
   const openReset = (admin: AdminUserOut) => {
     setError(null);
-    setResetDone(null);
+    setRowNotice(null);
     setResetError(null);
     setResetting(admin);
   };
@@ -244,7 +245,12 @@ function AdministratorsSection({ me }: { me: string }) {
     setBusy(true);
     try {
       await adminApi.resetAdminPassword(resetting.id, password);
-      setResetDone(resetting.id);
+      setRowNotice({
+        id: resetting.id,
+        text: resetting.email === me
+          ? "New password set. Use it the next time you sign in."
+          : "New password set. They aren't notified, so give it to them yourself.",
+      });
       setResetting(null);
     } catch (err) {
       setResetError(failureMessage(err, "Could not reset the password."));
@@ -257,59 +263,61 @@ function AdministratorsSection({ me }: { me: string }) {
     <section className="admin-group" aria-labelledby="admins-list">
       <h2 className="t-subtitle" id="admins-list">All administrators</h2>
       {error && <p className="qc-field__error">{error}</p>}
-      {admins && (
-        <ul className="admin-list" aria-labelledby="admins-list">
-          {admins.map((admin) => (
-            <li key={admin.id} className="admin-list-item">
-              <div>
-                <strong className="t-body">{admin.email}</strong>
-                {rowCaption(admin, me) && <p className="t-caption">{rowCaption(admin, me)}</p>}
-                {resetDone === admin.id && (
-                  <p className="admin-success" role="status">
-                    <Icon name="check" />
-                    {admin.email === me
-                      ? "New password set. Use it the next time you sign in."
-                      : "New password set. They aren't notified, so give it to them yourself."}
-                  </p>
-                )}
-              </div>
-              <div className="admin-row-actions">
-                <button type="button" className="qc-btn qc-btn--secondary" onClick={() => openReset(admin)}>
-                  Reset password
-                </button>
-                {/* The server refuses to remove the signed-in admin. The button stays (disabled) so the
-                    button columns line up; the reason is a tooltip and the screen-reader description. */}
-                {admin.email === me ? (
-                  <>
-                    <button type="button" className="qc-btn qc-btn--secondary" disabled
-                            title={SELF_REMOVE_REASON} aria-describedby={`admin-${admin.id}-no-remove`}>
+      {/* One card like the other sections: the admins as divided rows, the add button at the foot. */}
+      <div className="admin-card">
+        {admins && (
+          <ul className="admin-list admin-list--in-card" aria-labelledby="admins-list">
+            {admins.map((admin) => (
+              <li key={admin.id} className="admin-list-item">
+                <div>
+                  <strong className="t-body">{admin.email}</strong>
+                  {rowCaption(admin, me) && <p className="t-caption">{rowCaption(admin, me)}</p>}
+                  {rowNotice?.id === admin.id && (
+                    <p className="admin-success" role="status">
+                      <Icon name="check" />
+                      {rowNotice.text}
+                    </p>
+                  )}
+                </div>
+                <div className="admin-row-actions">
+                  <button type="button" className="qc-btn qc-btn--secondary" onClick={() => openReset(admin)}>
+                    Reset password
+                  </button>
+                  {/* The server refuses to remove the signed-in admin. The button stays (disabled) so the
+                      button columns line up; the reason is a tooltip and the screen-reader description. */}
+                  {admin.email === me ? (
+                    <>
+                      <button type="button" className="qc-btn qc-btn--secondary" disabled
+                              title={SELF_REMOVE_REASON} aria-describedby={`admin-${admin.id}-no-remove`}>
+                        Remove
+                      </button>
+                      <span id={`admin-${admin.id}-no-remove`} hidden>{SELF_REMOVE_REASON}</span>
+                    </>
+                  ) : (
+                    <button type="button" className="qc-btn qc-btn--secondary" onClick={() => openRemove(admin)}>
                       Remove
                     </button>
-                    <span id={`admin-${admin.id}-no-remove`} hidden>{SELF_REMOVE_REASON}</span>
-                  </>
-                ) : (
-                  <button type="button" className="qc-btn qc-btn--secondary" onClick={() => openRemove(admin)}>
-                    Remove
-                  </button>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="admin-card__footer">
+          <button type="button" className="qc-btn qc-btn--primary" onClick={openAdd}>
+            Add administrator
+          </button>
+        </div>
+      </div>
+      {adding && (
+        <AddAdminDialog
+          minLength={MIN_PASSWORD_LENGTH}
+          busy={busy}
+          error={addError}
+          onSubmit={add}
+          onCancel={() => setAdding(false)}
+        />
       )}
-      <form onSubmit={add} className="admin-form">
-        <label className="qc-field">
-          <span className="qc-field__label">New admin email</span>
-          <input className="qc-input" type="email" value={email} required
-                 autoComplete="off" onChange={(e) => setEmail(e.target.value)} />
-        </label>
-        <PasswordField label="New admin password" value={password} onChange={setPassword}
-                       autoComplete="new-password" minLength={MIN_PASSWORD_LENGTH} />
-        <PasswordField label="Repeat password" value={repeat} onChange={setRepeat}
-                       autoComplete="new-password" matches={password} />
-        <button className="qc-btn qc-btn--primary" type="submit">Add administrator</button>
-        {addError && <p className="qc-field__error">{addError}</p>}
-      </form>
       {resetting && (
         <ResetPasswordDialog
           email={resetting.email}

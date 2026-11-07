@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PasswordField } from "./PasswordField";
+import { SheetForm } from "./SheetForm";
 
 interface ResetPasswordDialogProps {
   email: string;
@@ -11,8 +12,7 @@ interface ResetPasswordDialogProps {
   onCancel: () => void;
 }
 
-/** Sets a new password for another administrator. Same sheet as ConfirmDialog, but a form:
- *  focus starts in the first field, Enter submits, Escape and the scrim cancel. */
+/** Sets a new password for another administrator. Focus starts in the first field. */
 export function ResetPasswordDialog({
   email,
   minLength,
@@ -21,21 +21,14 @@ export function ResetPasswordDialog({
   onSubmit,
   onCancel,
 }: ResetPasswordDialogProps) {
-  const titleId = useId();
   const firstRef = useRef<HTMLInputElement>(null);
   const [password, setPassword] = useState("");
   const [repeat, setRepeat] = useState("");
   const [invalid, setInvalid] = useState<string | null>(null);
 
   useEffect(() => { firstRef.current?.focus(); }, []);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onCancel]);
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const submit = () => {
     if (password !== repeat) return setInvalid("The new passwords do not match.");
     if (password.length < minLength) {
       return setInvalid(`The new password must be at least ${minLength} characters.`);
@@ -44,29 +37,20 @@ export function ResetPasswordDialog({
     onSubmit(password);
   };
 
-  const message = invalid ?? error;
-
   return (
-    <div className="qs-overlay qc-scrim" onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
-      <form className="qc-sheet" role="dialog" aria-modal="true" aria-labelledby={titleId} onSubmit={submit}>
-        <h2 className="qc-sheet__title" id={titleId}>Reset password for {email}</h2>
-        <p className="qc-sheet__body">
-          The new password takes effect immediately. Give it to {email} yourself; they are not notified.
-        </p>
-        <PasswordField ref={firstRef} label="New password" value={password} onChange={setPassword}
-                       autoComplete="new-password" minLength={minLength} />
-        <PasswordField label="Repeat new password" value={repeat} onChange={setRepeat} autoComplete="new-password"
-                       matches={password} />
-        {message && <p className="qc-field__error" role="alert">{message}</p>}
-        <div className="qc-sheet__actions">
-          <button type="submit" disabled={busy} className="qc-btn qc-btn--primary qc-btn--block">
-            Reset password
-          </button>
-          <button type="button" className="qc-btn qc-btn--secondary qc-btn--block" onClick={onCancel}>
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
+    <SheetForm
+      title={`Reset password for ${email}`}
+      note={`The new password takes effect immediately. Give it to ${email} yourself; they are not notified.`}
+      submitLabel="Reset password"
+      busy={busy}
+      error={invalid ?? error}
+      onSubmit={submit}
+      onCancel={onCancel}
+    >
+      <PasswordField ref={firstRef} label="New password" value={password} onChange={setPassword}
+                     autoComplete="new-password" minLength={minLength} />
+      <PasswordField label="Repeat new password" value={repeat} onChange={setRepeat} autoComplete="new-password"
+                     matches={password} />
+    </SheetForm>
   );
 }

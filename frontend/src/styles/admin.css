@@ -119,6 +119,12 @@
 /* Titled groups (Administrators, Feedback): heading, cards and messages spaced on one rhythm */
 .admin-group { display: grid; gap: var(--space-3); }
 .admin-group > .t-subtitle { margin: 0; }
+/* A list inside one card (Administrators): rows divided by a line instead of a card each */
+.admin-card { background: var(--surface-raised); border-radius: var(--radius-lg); box-shadow: var(--shadow-raised); }
+.admin-list--in-card { gap: 0; }
+.admin-list--in-card .admin-list-item { padding: var(--space-4) var(--space-5); border-radius: 0; background: none; box-shadow: none; }
+.admin-list--in-card .admin-list-item + .admin-list-item { border-top: 1px solid var(--line); }
+.admin-card__footer { padding: var(--space-4) var(--space-5); border-top: 1px solid var(--line); }
 .admin-extra-fields { margin-top: var(--space-3); padding-top: var(--space-4); border-top: 2px solid var(--gold-500); }
 .admin-assignments { display: flex; flex-direction: column; gap: var(--space-3); }
 .admin-assignment {
