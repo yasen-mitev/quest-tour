@@ -4,10 +4,25 @@ from fastapi import Request
 from sqlalchemy.exc import IntegrityError
 
 from questtour.admin.errors import AdminValidationError, ConflictError, FieldError
+from questtour.admin.schemas import TokenReveal
+from questtour.models import Assignment
+from questtour.tokens import generate_token, hash_token
 
 
 def get_admin_host_id(request: Request) -> str:
     return request.app.state.settings.host_id
+
+
+def issue_token(assignment: Assignment, public_base_url: str, now: datetime) -> TokenReveal:
+    """Give a flushed assignment a new token; only its hash is stored, the reveal shows it once."""
+    token = generate_token()
+    assignment.token_hash = hash_token(token)
+    assignment.issued_at = now
+    return TokenReveal(
+        assignment_id=assignment.id,
+        token=token,
+        url=f"{public_base_url.rstrip('/')}/play/{token}",
+    )
 
 
 def _ts_iso(dt: datetime) -> str:
@@ -53,6 +68,7 @@ def _is_unique_conflict(orig_msg: str, field_map: dict[str, str]) -> FieldError 
         "uq_teams_host_key": "key",
         "uq_teams_host_name": "name",
         "uq_assignments_team_game": "game",
+        "uq_game_requests_challenge": "altcha",
     }
     for constraint, field in constraint_to_field.items():
         if constraint in lower:

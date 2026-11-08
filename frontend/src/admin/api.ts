@@ -8,6 +8,10 @@ import type {
   ConflictBody,
   Game,
   GameInput,
+  GameRequestDetail,
+  GameRequestFilter,
+  GameRequestListItem,
+  GameRequestUpdate,
   Landmark,
   LandmarkInput,
   Team,
@@ -201,6 +205,16 @@ export const adminApi = {
     adminRequest<AssignmentOut[]>(`/api/admin/assignments/team/${teamId}`, undefined, "GET"),
   reissueToken: (assignmentId: number) =>
     adminRequest<TokenReveal>(`/api/admin/assignments/${assignmentId}/reissue`, {}, "POST"),
+  gameRequests: (status: GameRequestFilter = "pending") =>
+    adminRequest<GameRequestListItem[]>(`/api/admin/requests?status=${status}`, undefined, "GET"),
+  gameRequest: (id: number) =>
+    adminRequest<GameRequestDetail>(`/api/admin/requests/${id}`, undefined, "GET"),
+  updateGameRequest: (id: number, data: GameRequestUpdate) =>
+    adminRequest<GameRequestDetail>(`/api/admin/requests/${id}`, data, "PUT"),
+  approveGameRequest: (id: number, seenAt?: string) =>
+    adminRequest<TokenReveal[]>(`/api/admin/requests/${id}/approve`, { seen_at: seenAt }, "POST"),
+  rejectGameRequest: (id: number, seenAt?: string) =>
+    adminRequest<GameRequestDetail>(`/api/admin/requests/${id}/reject`, { seen_at: seenAt }, "POST"),
   listTeamPhotos: (teamId?: number, gameId?: number) => {
     const params = new URLSearchParams();
     if (teamId !== undefined) params.set("team_id", String(teamId));

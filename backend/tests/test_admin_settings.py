@@ -38,6 +38,82 @@ def test_settings_rejects_short_session_secret():
         )
 
 
+def test_request_settings_defaults():
+    s = Settings(_env_file=None, database_url="sqlite://", public_base_url="http://test")
+    assert s.public_site_origin is None
+    assert s.request_max_teams == 10
+    assert s.request_max_pending == 50
+    assert s.request_max_per_hour == 20
+    assert s.request_retention_days == 30
+    assert s.request_min_fill_seconds == 3
+    assert s.request_challenge_max_number == 50000
+    assert len(s.request_challenge_secret) >= 32
+    assert s.default_exit_message == ""
+
+
+def test_settings_rejects_short_request_challenge_secret():
+    with pytest.raises(ValueError, match="request_challenge_secret"):
+        Settings(
+            _env_file=None,
+            database_url="sqlite://",
+            public_base_url="http://test",
+            request_challenge_secret="short",
+        )
+
+
+def test_settings_accepts_32_char_request_challenge_secret():
+    s = Settings(
+        _env_file=None,
+        database_url="sqlite://",
+        public_base_url="http://test",
+        request_challenge_secret="c" * 32,
+    )
+    assert s.request_challenge_secret == "c" * 32
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("", None),
+        ("   ", None),
+        ("https://quest-tour.example", "https://quest-tour.example"),
+        ("https://quest-tour.example/", "https://quest-tour.example"),
+        (" https://quest-tour.example// ", "https://quest-tour.example"),
+    ],
+)
+def test_public_site_origin_is_normalized(raw, expected):
+    s = Settings(
+        _env_file=None,
+        database_url="sqlite://",
+        public_base_url="http://test",
+        public_site_origin=raw,
+    )
+    assert s.public_site_origin == expected
+
+
+def test_public_site_origin_blank_env_is_none(monkeypatch):
+    monkeypatch.setenv("PUBLIC_SITE_ORIGIN", "")
+    s = Settings(_env_file=None, database_url="sqlite://", public_base_url="http://test")
+    assert s.public_site_origin is None
+
+
+def test_request_min_fill_seconds_must_not_be_negative():
+    with pytest.raises(ValueError):
+        Settings(
+            _env_file=None,
+            database_url="sqlite://",
+            public_base_url="http://test",
+            request_min_fill_seconds=-1,
+        )
+    s = Settings(
+        _env_file=None,
+        database_url="sqlite://",
+        public_base_url="http://test",
+        request_min_fill_seconds=0,
+    )
+    assert s.request_min_fill_seconds == 0
+
+
 def test_settings_entra_requires_all_fields():
     with pytest.raises(ValueError):
         Settings(

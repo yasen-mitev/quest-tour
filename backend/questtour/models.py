@@ -1,10 +1,12 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     JSON,
     Boolean,
+    Date,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -64,9 +66,44 @@ class Game(Timestamped, Base):
     reveal_after_attempts: Mapped[int] = mapped_column(Integer)  # N
     reveal_after_minutes: Mapped[int] = mapped_column(Integer)  # X
     reveal_penalty_minutes: Mapped[int] = mapped_column(Integer)  # P
+    # Issue #61: listed on the website's request form (GET /api/public/games)
+    requestable: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     tasks: Mapped[list["GameTask"]] = relationship(
         order_by="GameTask.position", cascade="all, delete-orphan"
     )
+
+
+class GameRequest(Timestamped, Base):
+    """A visitor's request for a game play (issue #61), approved or rejected in the admin panel.
+
+    ``created_at``, ``terms_accepted_at`` and ``decided_at`` are always assigned explicitly from the
+    injected clock (no default), so FakeClock tests control the hourly cap, purge and ordering.
+    ``challenge`` is unique: once stored with a request, the proof-of-work challenge is consumed.
+    """
+
+    __tablename__ = "game_requests"
+    __table_args__ = (
+        UniqueConstraint("challenge", name="uq_game_requests_challenge"),
+        Index("ix_game_requests_host_status", "host_id", "status"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    host_id: Mapped[str] = mapped_column(String(64))
+    game_id: Mapped[int | None] = mapped_column(ForeignKey("games.id", ondelete="SET NULL"))
+    play_date: Mapped[date] = mapped_column(Date)
+    # [{name, key, participants|null, valid_from|null, valid_until|null, team_id|null}]
+    teams: Mapped[list[dict]] = mapped_column(JSON)
+    contact_name: Mapped[str] = mapped_column(String(200))
+    contact_email: Mapped[str | None] = mapped_column(String(254))
+    contact_phone: Mapped[str | None] = mapped_column(String(32))
+    message: Mapped[str | None] = mapped_column(Text)
+    exit_message: Mapped[str | None] = mapped_column(Text)  # NULL = the default exit message
+    status: Mapped[str] = mapped_column(String(16), default="pending")  # pending|approved|rejected
+    terms_accepted_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    terms_version: Mapped[str] = mapped_column(String(64))
+    challenge: Mapped[str] = mapped_column(String(64))
+    decided_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    decided_by: Mapped[str | None] = mapped_column(String(254))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime)
 
 
 class GameTask(Base):

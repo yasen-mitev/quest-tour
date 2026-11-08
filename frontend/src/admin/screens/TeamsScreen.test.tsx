@@ -35,6 +35,7 @@ const game: Game = {
   time_zone: "Europe/Sofia",
   max_duration_minutes: 120,
   reveal: { attempts: 5, minutes: 20, penalty_minutes: 30 },
+  requestable: false,
   updated_at: "2024-01-01T00:00:00Z",
   task_landmark_ids: [],
 };

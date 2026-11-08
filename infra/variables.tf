@@ -106,6 +106,18 @@ variable "admin_session_secret" {
   sensitive   = true
 }
 
+variable "request_challenge_secret" {
+  description = ">=32-character random secret signing the proof-of-work challenges of the website's game request form."
+  type        = string
+  sensitive   = true
+}
+
+variable "public_site_origin" {
+  description = "Origin of the website that hosts the game request form (no trailing slash, e.g. https://quest-tour.example). Enables CORS for /api/public; empty leaves it off and the form fails."
+  type        = string
+  default     = ""
+}
+
 variable "budget_amount" {
   type    = number
   default = 45

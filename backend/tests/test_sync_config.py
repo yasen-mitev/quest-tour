@@ -220,6 +220,43 @@ def test_second_sync_is_idempotent_and_keeps_run_snapshot(
         assert s.query(GameRun).count() == 1
 
 
+def test_requestable_in_yaml_sets_the_flag_and_omission_preserves_it(
+    tmp_path, session_factory, blob_store
+):
+    """D11: the YAML key is optional; leaving it out never overwrites a flag set in the panel."""
+    root = write_config(tmp_path)
+    sync(root, session_factory, blob_store)
+    with session_factory() as s:
+        assert s.scalars(select(Game)).one().requestable is False   # model default for new games
+
+    with session_factory() as s:                                    # the admin panel turns it on
+        s.scalars(select(Game)).one().requestable = True
+        s.commit()
+    sync(root, session_factory, blob_store)                         # YAML omits the key
+    with session_factory() as s:
+        assert s.scalars(select(Game)).one().requestable is True
+
+    requestable_off = GAMES.replace("tasks: [a, b]", "tasks: [a, b], requestable: false")
+    write_config(
+        tmp_path,
+        games=requestable_off,
+        teams=(root / "teams.yaml").read_text(encoding="utf-8"),
+    )
+    sync(root, session_factory, blob_store)
+    with session_factory() as s:
+        assert s.scalars(select(Game)).one().requestable is False
+
+    requestable_on = GAMES.replace("tasks: [a, b]", "tasks: [a, b], requestable: true")
+    write_config(
+        tmp_path,
+        games=requestable_on,
+        teams=(root / "teams.yaml").read_text(encoding="utf-8"),
+    )
+    sync(root, session_factory, blob_store)
+    with session_factory() as s:
+        assert s.scalars(select(Game)).one().requestable is True
+
+
 def test_removed_assignment_is_deactivated(tmp_path, session_factory, blob_store):
     root = write_config(tmp_path)
     sync(root, session_factory, blob_store)

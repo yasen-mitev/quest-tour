@@ -14,7 +14,7 @@ from questtour.admin import admin_router
 from questtour.admin.errors import register_admin_exception_handlers
 from questtour.auth import auth_router
 from questtour.db import Base
-from questtour.models import Assignment, Team
+from questtour.models import Assignment, GameRequest, Team
 from questtour.settings import Settings
 from questtour.storage import LocalBlobStore
 
@@ -140,6 +140,52 @@ def test_create_game_returns_structured_data(admin_client):
     assert data["reveal"] == {"attempts": 5, "minutes": 20, "penalty_minutes": 30}
     assert data["task_landmark_ids"] == []
     assert "updated_at" in data
+
+
+def test_requestable_defaults_false_and_round_trips(admin_client):
+    _login(admin_client)
+    base = {
+        "key": "req-game",
+        "name": "Req Game",
+        "intro": "Intro.",
+        "time_zone": "Europe/Sofia",
+        "max_duration_minutes": 60,
+    }
+    created = admin_client.post("/api/admin/games", json=base)
+    assert created.status_code == 201
+    assert created.json()["requestable"] is False
+    game_id = created.json()["id"]
+
+    resp = admin_client.put(f"/api/admin/games/{game_id}", json={**base, "requestable": True})
+    assert resp.status_code == 200
+    assert resp.json()["requestable"] is True
+    assert admin_client.get(f"/api/admin/games/{game_id}").json()["requestable"] is True
+    assert [g["requestable"] for g in admin_client.get("/api/admin/games").json()] == [True]
+
+    # An update that omits the flag leaves it alone.
+    resp = admin_client.put(f"/api/admin/games/{game_id}", json=base)
+    assert resp.status_code == 200
+    assert resp.json()["requestable"] is True
+
+    resp = admin_client.put(f"/api/admin/games/{game_id}", json={**base, "requestable": False})
+    assert resp.json()["requestable"] is False
+
+
+def test_create_game_can_be_requestable(admin_client):
+    _login(admin_client)
+    resp = admin_client.post(
+        "/api/admin/games",
+        json={
+            "key": "open-game",
+            "name": "Open Game",
+            "intro": "Intro.",
+            "time_zone": "Europe/Sofia",
+            "max_duration_minutes": 60,
+            "requestable": True,
+        },
+    )
+    assert resp.status_code == 201
+    assert resp.json()["requestable"] is True
 
 
 def test_create_game_with_custom_reveal_settings(admin_client):
@@ -466,6 +512,50 @@ def test_delete_game_blocked_by_assignment(admin_client, session_factory):
     resp = admin_client.delete(f"/api/admin/games/{game_id}")
     assert resp.status_code == 409
     assert "assignment" in resp.json()["detail"].lower()
+
+
+def test_delete_game_blocked_by_pending_request(admin_client, session_factory):
+    _login(admin_client)
+    create_resp = admin_client.post(
+        "/api/admin/games",
+        json={
+            "key": "requested-game",
+            "name": "Requested Game",
+            "intro": "Intro.",
+            "time_zone": "Europe/Sofia",
+            "max_duration_minutes": 60,
+        },
+    )
+    game_id = create_resp.json()["id"]
+    now = datetime.now(UTC)
+    with session_factory() as session:
+        request = GameRequest(
+            host_id="default",
+            game_id=game_id,
+            play_date=now.date(),
+            teams=[],
+            contact_name="Maria",
+            terms_accepted_at=now,
+            terms_version="v1",
+            challenge="delete-guard",
+            status="pending",
+            created_at=now,
+        )
+        session.add(request)
+        session.commit()
+        request_id = request.id
+
+    resp = admin_client.delete(f"/api/admin/games/{game_id}")
+    assert resp.status_code == 409
+    assert resp.json()["detail"] == "cannot delete a game that has pending requests"
+
+    # A decided request does not block the deletion.
+    with session_factory() as session:
+        session.get(GameRequest, request_id).status = "rejected"
+        session.commit()
+    resp = admin_client.delete(f"/api/admin/games/{game_id}")
+    assert resp.status_code == 200
+    assert resp.json() == {"deleted": True}
 
 
 def test_delete_game_succeeds_when_unused(admin_client):

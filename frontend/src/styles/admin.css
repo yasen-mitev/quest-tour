@@ -25,6 +25,12 @@
 }
 .admin-nav > a:hover { background: rgba(244,241,230,0.1); }
 .admin-nav > a.active { background: var(--gold-500); color: var(--ink); }
+/* Pending game requests next to "Requests" */
+.admin-nav__badge {
+  margin-left: auto; min-width: 24px; padding: 0 var(--space-2); border-radius: 12px;
+  background: var(--gold-500); color: var(--ink); font: 700 13px/24px var(--font-sans); text-align: center;
+}
+.admin-nav > a.active .admin-nav__badge { background: var(--ink); color: var(--gold-300); }
 .admin-nav__logout {
   margin-top: auto; display: flex; align-items: center; justify-content: center; min-height: var(--tap-min);
   padding: var(--space-2) var(--space-3); border: 1px solid var(--gold-500); border-radius: var(--radius-md);
@@ -132,6 +138,10 @@
   background: var(--surface-sunken); display: flex; flex-direction: column; gap: var(--space-2);
 }
 .admin-assignment .qc-input { background: var(--surface-raised); }
+/* Label / value pairs (a game request's contact and decision) */
+.admin-facts { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-4); margin: 0; padding: var(--space-5); }
+.admin-facts dt { font-weight: 700; }
+.admin-facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 .admin-list-field { display: flex; flex-direction: column; gap: var(--space-2); }
 .admin-list-row { display: flex; gap: var(--space-2); align-items: center; }
 .admin-list-row .qc-input { flex: 1 1 auto; }

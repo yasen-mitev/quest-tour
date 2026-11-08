@@ -7,11 +7,12 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import sessionmaker
+from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from questtour.admin import admin_router
 from questtour.admin.errors import register_admin_exception_handlers
-from questtour.api import health, images, play
+from questtour.api import health, images, play, public
 from questtour.auth import auth_router
 from questtour.auth.passwords import LoginThrottle, seed_auth_state
 from questtour.clock import Clock, utc_now
@@ -159,7 +160,18 @@ def create_app(
     app.include_router(health.router)
     app.include_router(play.router)
     app.include_router(images.router)
+    app.include_router(public.router)  # prefix /api/public (issue #61)
     app.add_exception_handler(LinkNotValid, link_not_valid_handler)
+    if settings.public_site_origin:
+        # D10: added last, so it is the outermost middleware and preflights and 4xx carry the
+        # headers. No credentials: cross-origin JS cannot use the admin session cookie.
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[settings.public_site_origin],
+            allow_credentials=False,
+            allow_methods=["GET", "POST"],
+            allow_headers=["Content-Type"],
+        )
     install_frontend(app, settings.static_dir)
     return app
 

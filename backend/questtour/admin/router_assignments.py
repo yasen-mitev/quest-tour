@@ -3,13 +3,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 
-from questtour.admin.crud import get_admin_host_id
+from questtour.admin.crud import get_admin_host_id, issue_token
 from questtour.admin.schemas import AssignmentOut, TokenReveal
 from questtour.api.deps import SessionDep
 from questtour.auth import AdminSession, require_admin
 from questtour.clock import utc_now
 from questtour.models import Assignment, Team
-from questtour.tokens import generate_token, hash_token
 
 router = APIRouter(prefix="/assignments", tags=["admin-assignments"])
 
@@ -25,15 +24,9 @@ def reissue_assignment(
     assignment = session.get(Assignment, id)
     if assignment is None or assignment.host_id != host_id:
         raise HTTPException(status_code=404)
-    token = generate_token()
-    assignment.token_hash = hash_token(token)
-    assignment.issued_at = utc_now()
+    reveal = issue_token(assignment, request.app.state.settings.public_base_url, utc_now())
     session.commit()
-    return TokenReveal(
-        assignment_id=assignment.id,
-        token=token,
-        url=f"{request.app.state.settings.public_base_url.rstrip('/')}/play/{token}",
-    )
+    return reveal
 
 
 @router.get("/team/{team_id}", response_model=list[AssignmentOut])

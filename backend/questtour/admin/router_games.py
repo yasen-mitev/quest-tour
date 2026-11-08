@@ -18,7 +18,7 @@ from questtour.admin.schemas import (
 from questtour.api.deps import SessionDep
 from questtour.auth import AdminSession, require_admin
 from questtour.clock import utc_now
-from questtour.models import Assignment, Game, GameTask, Landmark
+from questtour.models import Assignment, Game, GameRequest, GameTask, Landmark
 
 router = APIRouter(prefix="/games", tags=["admin-games"])
 
@@ -49,6 +49,7 @@ def _game_out(game: Game) -> GameOut:
             minutes=game.reveal_after_minutes,
             penalty_minutes=game.reveal_penalty_minutes,
         ),
+        requestable=game.requestable,
         updated_at=game.updated_at,
         task_landmark_ids=[t.landmark_id for t in game.tasks],
         available_languages=sorted(languages),
@@ -88,6 +89,7 @@ def create_game(
         reveal_after_attempts=data.reveal.attempts,
         reveal_after_minutes=data.reveal.minutes,
         reveal_penalty_minutes=data.reveal.penalty_minutes,
+        requestable=bool(data.requestable),
     )
     session.add(game)
     try:
@@ -136,6 +138,8 @@ def update_game(
     game.reveal_after_attempts = data.reveal.attempts
     game.reveal_after_minutes = data.reveal.minutes
     game.reveal_penalty_minutes = data.reveal.penalty_minutes
+    if data.requestable is not None:
+        game.requestable = data.requestable
     try:
         session.commit()
     except IntegrityError as exc:
@@ -209,6 +213,13 @@ def delete_game(
     assignments = session.scalar(select(func.count(Assignment.id)).where(Assignment.game_id == id))
     if assignments:
         raise HTTPException(status_code=409, detail="cannot delete a game that has assignments")
+    pending = session.scalar(
+        select(func.count(GameRequest.id)).where(
+            GameRequest.game_id == id, GameRequest.status == "pending"
+        )
+    )
+    if pending:
+        raise HTTPException(status_code=409, detail="cannot delete a game that has pending requests")
     session.delete(game)  # cascade deletes GameTask children
     session.commit()
     return {"deleted": True}

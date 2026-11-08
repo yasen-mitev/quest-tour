@@ -99,11 +99,13 @@ def apply_config(
     session.flush()
     games = {}
     for gc in cfg.games:
+        # An omitted `requestable` is not passed, so a flag set in the admin panel survives.
+        optional = {} if gc.requestable is None else {"requestable": gc.requestable}
         game = _upsert(
             session, Game, host_id, gc.id, name=gc.name, intro=gc.intro, time_zone=gc.time_zone,
             max_duration_minutes=gc.max_duration_minutes,
             reveal_after_attempts=gc.reveal.attempts, reveal_after_minutes=gc.reveal.minutes,
-            reveal_penalty_minutes=gc.reveal.penalty_minutes,
+            reveal_penalty_minutes=gc.reveal.penalty_minutes, **optional,
         )
         wanted = [landmarks[key].id for key in gc.tasks]
         if [t.landmark_id for t in game.tasks] != wanted:  # runs keep their own snapshot

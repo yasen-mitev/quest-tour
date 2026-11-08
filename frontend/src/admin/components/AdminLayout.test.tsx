@@ -3,12 +3,13 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ConsentBanner } from "../../components/ConsentBanner";
 import { APP_VERSION, versionLabel } from "../../lib/version";
-import { AdminLayout } from "./AdminLayout";
+import { AdminLayout, REQUESTS_CHANGED } from "./AdminLayout";
 import { adminApi } from "../api";
 
 vi.mock("../api", () => ({
   adminApi: {
     logout: vi.fn(),
+    gameRequests: vi.fn(),
   },
 }));
 
@@ -16,6 +17,7 @@ describe("AdminLayout", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.mocked(adminApi.logout).mockReset();
+    vi.mocked(adminApi.gameRequests).mockReset().mockResolvedValue([]);
     vi.stubGlobal("location", { href: "" });
   });
 
@@ -31,6 +33,45 @@ describe("AdminLayout", () => {
   it("links to the Administrators screen", () => {
     render(<AdminLayout active="dashboard">Content</AdminLayout>);
     expect(screen.getByRole("link", { name: "Administrators" })).toHaveAttribute("href", "/admin/administrators");
+  });
+
+  it("lists Requests right after Dashboard", () => {
+    render(<AdminLayout active="dashboard">Content</AdminLayout>);
+    const links = screen.getAllByRole("link").map((a) => a.getAttribute("href"));
+    expect(links.slice(0, 2)).toEqual(["/admin/dashboard", "/admin/requests"]);
+  });
+
+  it("badges Requests with the number of pending requests", async () => {
+    vi.mocked(adminApi.gameRequests).mockResolvedValueOnce([
+      { id: 1, created_at: "2026-11-01T09:00:00Z", contact_name: "A", game_id: 1, game_name: "G", play_date: "2026-11-20", team_count: 1, status: "pending" },
+      { id: 2, created_at: "2026-11-01T10:00:00Z", contact_name: "B", game_id: 1, game_name: "G", play_date: "2026-11-21", team_count: 2, status: "pending" },
+      { id: 3, created_at: "2026-11-01T11:00:00Z", contact_name: "C", game_id: 1, game_name: "G", play_date: "2026-11-22", team_count: 1, status: "pending" },
+    ]);
+    render(<AdminLayout active="dashboard">Content</AdminLayout>);
+
+    expect(await screen.findByRole("link", { name: "Requests (3 pending)" })).toHaveAttribute("href", "/admin/requests");
+    expect(adminApi.gameRequests).toHaveBeenCalledWith("pending");
+  });
+
+  it("shows no badge when nothing is pending", async () => {
+    render(<AdminLayout active="dashboard">Content</AdminLayout>);
+    await waitFor(() => expect(adminApi.gameRequests).toHaveBeenCalled());
+    expect(screen.getByRole("link", { name: "Requests" })).toBeInTheDocument();
+  });
+
+  it("refreshes the badge when a request is decided", async () => {
+    vi.mocked(adminApi.gameRequests)
+      .mockResolvedValueOnce([
+        { id: 1, created_at: "2026-11-01T09:00:00Z", contact_name: "A", game_id: 1, game_name: "G", play_date: "2026-11-20", team_count: 1, status: "pending" },
+      ])
+      .mockResolvedValueOnce([]);
+    render(<AdminLayout active="requests">Content</AdminLayout>);
+    await screen.findByRole("link", { name: "Requests (1 pending)" });
+
+    window.dispatchEvent(new Event(REQUESTS_CHANGED));
+
+    expect(await screen.findByRole("link", { name: "Requests" })).toHaveClass("active");
+    expect(adminApi.gameRequests).toHaveBeenCalledTimes(2);
   });
 
   it("shows the running version at the foot of the sidebar (issue #29)", () => {

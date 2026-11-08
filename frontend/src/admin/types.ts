@@ -37,6 +37,8 @@ export interface Game {
   time_zone: string;
   max_duration_minutes: number;
   reveal: RevealSettings;
+  /** Offered on the website's request form (issue #61) */
+  requestable: boolean;
   updated_at: string;
   task_landmark_ids: number[];
 }
@@ -72,6 +74,73 @@ export interface TokenReveal {
   assignment_id: number;
   token: string;
   url: string;
+}
+
+/** A game play request from the website (issue #61) */
+export type GameRequestStatus = "pending" | "approved" | "rejected";
+export type GameRequestFilter = GameRequestStatus | "all";
+
+export interface GameRequestListItem {
+  id: number;
+  created_at: string;
+  contact_name: string;
+  game_id: number | null;
+  /** null when the game is gone */
+  game_name: string | null;
+  /** YYYY-MM-DD */
+  play_date: string;
+  team_count: number;
+  status: GameRequestStatus;
+}
+
+export interface GameRequestTeam {
+  name: string;
+  key: string;
+  participants: number | null;
+  /** Resolved (the play-date default when not set); null only when the game is gone */
+  valid_from: string | null;
+  valid_until: string | null;
+  /** Set once the request is approved */
+  team_id: number | null;
+}
+
+export interface GameRequestDetail {
+  id: number;
+  created_at: string;
+  updated_at: string;
+  status: GameRequestStatus;
+  game_id: number | null;
+  game_name: string | null;
+  game_time_zone: string | null;
+  play_date: string;
+  contact_name: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+  message: string | null;
+  /** Resolved: the request's own, else the default */
+  exit_message: string;
+  terms_accepted_at: string;
+  terms_version: string;
+  decided_at: string | null;
+  decided_by: string | null;
+  teams: GameRequestTeam[];
+}
+
+export interface GameRequestTeamInput {
+  name: string;
+  key: string;
+  participants: number | null;
+  /** In the game's time zone when without an offset; null = the play-date default */
+  valid_from: string | null;
+  valid_until: string | null;
+}
+
+export interface GameRequestUpdate {
+  game_id: number;
+  /** null = the default exit message */
+  exit_message: string | null;
+  teams: GameRequestTeamInput[];
+  seen_at?: string;
 }
 
 /** What the players thought (issue #38) */
