@@ -16,6 +16,7 @@ type GameForm = {
   reveal_attempts: number;
   reveal_minutes: number;
   reveal_penalty_minutes: number;
+  requestable: boolean;
 };
 
 const GAME_FIELDS: FieldDef[] = [
@@ -27,6 +28,7 @@ const GAME_FIELDS: FieldDef[] = [
   { name: "reveal_attempts", label: "Reveal attempts", type: "number" as const, required: true },
   { name: "reveal_minutes", label: "Reveal minutes", type: "number" as const, required: true },
   { name: "reveal_penalty_minutes", label: "Reveal penalty (minutes)", type: "number" as const, required: true },
+  { name: "requestable", label: "Requestable on the website", type: "checkbox" as const },
 ];
 
 function emptyForm(): GameForm {
@@ -39,6 +41,7 @@ function emptyForm(): GameForm {
     reveal_attempts: 5,
     reveal_minutes: 20,
     reveal_penalty_minutes: 30,
+    requestable: false,
   };
 }
 
@@ -52,6 +55,7 @@ function gameToForm(game: Game): GameForm {
     reveal_attempts: game.reveal.attempts,
     reveal_minutes: game.reveal.minutes,
     reveal_penalty_minutes: game.reveal.penalty_minutes,
+    requestable: game.requestable,
   };
 }
 
@@ -67,6 +71,7 @@ function formToGame(form: GameForm): GameInput {
       minutes: form.reveal_minutes,
       penalty_minutes: form.reveal_penalty_minutes,
     },
+    requestable: form.requestable,
   };
 }
 

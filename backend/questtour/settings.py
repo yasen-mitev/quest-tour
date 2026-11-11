@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import EmailStr, SecretStr, field_validator, model_validator
+from pydantic import EmailStr, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 _ENTRA_FIELDS = (
@@ -57,11 +57,37 @@ class Settings(BaseSettings):
     admin_dev_emails: Annotated[list[str], NoDecode] = []
     config_dir: Path = Path("config")
 
+    # Game play requests (issue #61): the public form on the website posts to /api/public/*.
+    # Origin of the website (no trailing slash); CORS for /api/public is enabled only when set.
+    public_site_origin: str | None = None
+    request_max_teams: int = 10
+    request_max_pending: int = 50
+    request_max_per_hour: int = 20
+    request_retention_days: int = 30  # decided requests are purged this long after the decision
+    request_min_fill_seconds: int = Field(3, ge=0)
+    request_challenge_max_number: int = 50000  # proof-of-work difficulty
+    request_challenge_secret: str = "dev-request-challenge-secret-do-not-use-in-production"
+    default_exit_message: str = ""
+
     @field_validator("admin_session_secret")
     @classmethod
     def _validate_admin_session_secret(cls, value: str) -> str:
         if len(value) < 32:
             raise ValueError("admin_session_secret must be at least 32 characters")
+        return value
+
+    @field_validator("request_challenge_secret")
+    @classmethod
+    def _validate_request_challenge_secret(cls, value: str) -> str:
+        if len(value) < 32:
+            raise ValueError("request_challenge_secret must be at least 32 characters")
+        return value
+
+    @field_validator("public_site_origin", mode="before")
+    @classmethod
+    def _normalize_public_site_origin(cls, value):
+        if isinstance(value, str):
+            return value.strip().rstrip("/") or None
         return value
 
     @field_validator("admin_dev_emails", mode="before")

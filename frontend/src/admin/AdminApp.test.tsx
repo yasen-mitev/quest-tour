@@ -22,6 +22,8 @@ vi.mock("./api", async (importOriginal) => ({
       email: "boss@example.com",
     }),
     listAdmins: vi.fn().mockResolvedValue([]),
+    gameRequests: vi.fn().mockResolvedValue([]),
+    gameRequest: vi.fn(),
   },
 }));
 
@@ -59,6 +61,12 @@ describe("AdminApp", () => {
       render(<AdminApp path="/admin/teams" />);
       await waitFor(() => expect(adminApi.teams).toHaveBeenCalled());
       expect(screen.getByRole("link", { name: "Teams" })).toHaveClass("active");
+    });
+
+    it("renders the Requests screen for /admin/requests", async () => {
+      render(<AdminApp path="/admin/requests" />);
+      expect(await screen.findByRole("heading", { level: 1, name: "Requests" })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Requests" })).toHaveClass("active");
     });
 
     it("renders the Administrators screen for /admin/administrators", async () => {

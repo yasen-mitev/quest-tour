@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-export type FieldType = "text" | "textarea" | "number" | "list" | "i18n-text" | "i18n-textarea";
+export type FieldType = "text" | "textarea" | "number" | "list" | "i18n-text" | "i18n-textarea" | "checkbox";
 
 export interface FieldDef {
   name: string;          // base field name
@@ -45,6 +45,7 @@ function valuesEqual(a: unknown, b: unknown): boolean {
 function isEmptyValue(value: unknown, type: FieldType): boolean {
   if (value === undefined || value === null) return true;
   if (type === "list") return Array.isArray(value) && value.length === 0;
+  if (type === "checkbox") return value !== true;
   if (type === "number") return value === "" || Number.isNaN(Number(value));
   return String(value).trim() === "";
 }
@@ -186,9 +187,23 @@ export function EntityForm<T extends Record<string, unknown>>({
             key={field.name}
             className={`qc-field ${hasErrors ? "qc-field--error" : ""}`}
           >
-            <label className="qc-field__label" htmlFor={`field-${field.name}`}>
-              {field.label}
-            </label>
+            {field.type === "checkbox" ? (
+              <label className="admin-check">
+                <input
+                  id={`field-${field.name}`}
+                  type="checkbox"
+                  checked={values[field.name] === true}
+                  onChange={(e) => setField(field.name, e.target.checked)}
+                  aria-required={field.required ? "true" : undefined}
+                  aria-invalid={hasErrors ? "true" : undefined}
+                />
+                {field.label}
+              </label>
+            ) : (
+              <label className="qc-field__label" htmlFor={`field-${field.name}`}>
+                {field.label}
+              </label>
+            )}
             {(field.type === "text" || (field.type === "i18n-text" && activeLang === "en")) && (
               <input
                 id={`field-${field.name}`}

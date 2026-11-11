@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field, model_validator
@@ -108,6 +108,8 @@ class GameCreate(BaseModel):
     time_zone: str
     max_duration_minutes: int = Field(gt=0)
     reveal: RevealSettings = Field(default_factory=RevealSettings)
+    # None = leave as is (a new game starts not requestable)
+    requestable: bool | None = None
 
 
 class GameUpdate(GameCreate):
@@ -124,6 +126,7 @@ class GameOut(BaseModel):
     time_zone: str
     max_duration_minutes: int
     reveal: RevealSettings
+    requestable: bool
     updated_at: datetime
     task_landmark_ids: list[int]
     available_languages: list[str]
@@ -186,6 +189,71 @@ class TokenReveal(BaseModel):
     url: str
 
 
+class RequestTeamIn(BaseModel):
+    """A team of a game request as edited by the admin; a window left null is the play-date
+    default. Times without an offset are in the game's time zone."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str
+    key: str
+    participants: int | None = None
+    valid_from: str | None = None
+    valid_until: str | None = None
+
+
+class GameRequestUpdate(BaseModel):
+    game_id: int
+    exit_message: str | None = None  # None = the default exit message
+    teams: list[RequestTeamIn] = Field(min_length=1)
+    seen_at: datetime | None = None
+
+
+class GameRequestDecision(BaseModel):
+    seen_at: datetime | None = None
+
+
+class GameRequestListItem(BaseModel):
+    id: int
+    created_at: datetime
+    contact_name: str
+    game_id: int | None
+    game_name: str | None  # None when the game is gone
+    play_date: date
+    team_count: int
+    status: str
+
+
+class GameRequestTeamOut(BaseModel):
+    name: str
+    key: str
+    participants: int | None
+    valid_from: datetime | None  # resolved; None only when the game is gone
+    valid_until: datetime | None
+    team_id: int | None  # set once the request is approved
+
+
+class GameRequestOut(BaseModel):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    status: str
+    game_id: int | None
+    game_name: str | None
+    game_time_zone: str | None
+    play_date: date
+    contact_name: str
+    contact_email: str | None
+    contact_phone: str | None
+    message: str | None
+    exit_message: str  # resolved: the request's own, else the default
+    terms_accepted_at: datetime
+    terms_version: str
+    decided_at: datetime | None
+    decided_by: str | None
+    teams: list[GameRequestTeamOut]
+
+
 def _validate_team(data: TeamCreate) -> None:
     try:
         TeamBaseCfg.model_validate({
@@ -227,6 +295,7 @@ def _validate_game(data: GameCreate) -> None:
             "time_zone": data.time_zone,
             "max_duration_minutes": data.max_duration_minutes,
             "reveal": data.reveal.model_dump(),
+            "requestable": data.requestable,
         })
     except ValidationError as exc:
         raise AdminValidationError(_pydantic_errors(exc)) from exc

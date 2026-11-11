@@ -100,6 +100,8 @@ class GameBaseCfg(_Cfg):
     time_zone: str
     max_duration_minutes: int = Field(gt=0)
     reveal: RevealCfg = Field(default_factory=RevealCfg)
+    # None = not in the file: sync-config then leaves a flag set in the admin panel alone.
+    requestable: bool | None = None
 
     @field_validator("time_zone")
     @classmethod

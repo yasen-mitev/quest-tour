@@ -24,7 +24,7 @@ locals {
     ADMIN_ENTRA_GROUP_OBJECT_ID = var.admin_entra_group_object_id
   })
 
-  # Every value questtour.settings reads in prod (technical §7: app settings, no secrets needed).
+  # Every value questtour.settings reads in prod (technical §7: app settings; secrets arrive as sensitive variables).
   app_settings = merge({
     SCM_DO_BUILD_DURING_DEPLOYMENT = "true"
     DATABASE_URL                   = "postgresql+psycopg://${local.web_app_name}@${local.pg_fqdn}:5432/${var.db_name}?sslmode=require"
@@ -47,5 +47,8 @@ locals {
     ADMIN_SESSION_SECURE          = "true"
     ADMIN_SESSION_MAX_AGE_MINUTES = "720"
     ADMIN_ENTRA_REDIRECT_URI      = "${local.public_base_url}/api/admin/auth/callback"
+    # Website game request form (/api/public/*): challenge signing key and the CORS origin.
+    REQUEST_CHALLENGE_SECRET = var.request_challenge_secret
+    PUBLIC_SITE_ORIGIN       = var.public_site_origin
   }, local.entra_settings)
 }

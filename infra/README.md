@@ -157,8 +157,8 @@ For a local admin panel, set `ADMIN_AUTH_PROVIDER=dev` and `ADMIN_DEV_EMAILS` in
 
 All are repository-scope Actions variables. Azure login is OIDC, so there are **no Azure
 secrets**; the only GitHub **secrets** are the admin panel's session secret, bootstrap password and
-(optional) Entra client secret (see §3.1). `bootstrap.sh` sets all of them except the optional
-`TF_HOST_PRINCIPAL_OBJECT_IDS`, `DEPLOY_ENABLED` and the admin panel entries.
+(optional) Entra client secret (see §3.1), and the request form's challenge secret. `bootstrap.sh` sets all of them except the optional
+`TF_HOST_PRINCIPAL_OBJECT_IDS`, `DEPLOY_ENABLED`, the admin panel entries, and the request form's `REQUEST_CHALLENGE_SECRET` and `PUBLIC_SITE_ORIGIN` (set them by hand; the guard loop fails while the secret is empty).
 
 | Variable | Meaning |
 |---|---|
@@ -180,6 +180,8 @@ secrets**; the only GitHub **secrets** are the admin panel's session secret, boo
 | `ADMIN_ENTRA_TENANT_ID`, `ADMIN_ENTRA_CLIENT_ID`, `ADMIN_ENTRA_GROUP_OBJECT_ID` | admin panel, optional: Entra tenant, app registration client ID, and the Object ID of the admin group (§3.1) |
 | `ADMIN_ENTRA_CLIENT_SECRET` | **secret**, optional: client secret of the admin panel Entra app (§3.1) |
 | `ADMIN_SESSION_SECRET` | **secret**: ≥32-byte random string signing admin session cookies. Generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
+| `REQUEST_CHALLENGE_SECRET` | **secret**: ≥32-character random string signing the proof-of-work challenges of the website's game request form (required; Infra fails when it is empty). Generate it like `ADMIN_SESSION_SECRET` |
+| `PUBLIC_SITE_ORIGIN` | the website's origin with no trailing slash, e.g. `https://quest-tour.example`; it must equal `site.url` in the website's `site.config.json`. It enables CORS for `/api/public/*`. If unset, CORS stays off and the request form on the website fails, so set it and run Infra `plan` → `apply` before shipping the website change |
 
 ## 5. Budget start date
 

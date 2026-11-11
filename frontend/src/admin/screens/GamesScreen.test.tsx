@@ -25,6 +25,7 @@ const game: Game = {
   time_zone: "Europe/Sofia",
   max_duration_minutes: 120,
   reveal: { attempts: 5, minutes: 20, penalty_minutes: 30 },
+  requestable: false,
   updated_at: "2024-01-01T00:00:00Z",
   task_landmark_ids: [1],
 };
@@ -155,6 +156,48 @@ describe("GamesScreen", () => {
         expect.objectContaining({ name: "Updated Game", seen_at: "2024-01-01T00:00:00Z" }),
       );
     });
+  });
+
+  it("offers a game on the website's request form with the Requestable checkbox", async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminApi.updateGame).mockResolvedValueOnce({ ...game, requestable: true });
+
+    render(<GamesScreen subPath="games" />);
+    await waitFor(() => screen.getByText("City Tour"));
+
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    const checkbox = screen.getByRole("checkbox", { name: "Requestable on the website" });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+    await user.click(screen.getByRole("button", { name: "Update game" }));
+
+    await waitFor(() => {
+      expect(adminApi.updateGame).toHaveBeenCalledWith(1, expect.objectContaining({ requestable: true }));
+    });
+  });
+
+  it("shows a requestable game's checkbox ticked and creates new games not requestable", async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminApi.games).mockResolvedValue([{ ...game, requestable: true }]);
+    vi.mocked(adminApi.createGame).mockResolvedValueOnce(game);
+
+    render(<GamesScreen subPath="games" />);
+    await waitFor(() => screen.getByText("City Tour"));
+
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    expect(screen.getByRole("checkbox", { name: "Requestable on the website" })).toBeChecked();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    await user.click(screen.getByRole("button", { name: "New game" }));
+    expect(screen.getByRole("checkbox", { name: "Requestable on the website" })).not.toBeChecked();
+    await user.type(screen.getByLabelText("Key"), "new-game");
+    await user.type(screen.getByLabelText("Name"), "New Game");
+    await user.type(screen.getByLabelText("Intro"), "Intro text");
+    await user.click(screen.getByRole("button", { name: "Create game" }));
+
+    await waitFor(() => expect(adminApi.createGame).toHaveBeenCalled());
+    expect(vi.mocked(adminApi.createGame).mock.calls[0][0].requestable).toBe(false);
   });
 
   it("refreshes editing updated_at after saving tasks", async () => {

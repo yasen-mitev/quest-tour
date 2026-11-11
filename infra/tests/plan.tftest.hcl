@@ -32,6 +32,8 @@ variables {
   admin_auth_provider         = "entra"
   admin_bootstrap_email       = "boss@example.com"
   admin_bootstrap_password    = "test-bootstrap-password"
+  request_challenge_secret    = "test-request-challenge-secret-at-least-32-chars"
+  public_site_origin          = "https://quest-tour.example"
 }
 
 run "prod_shape" {
@@ -66,6 +68,13 @@ run "prod_shape" {
       contains(keys(azurerm_linux_web_app.app.app_settings), "ADMIN_ENTRA_TENANT_ID")
     )
     error_message = "app settings must match what questtour.settings and startup.sh expect"
+  }
+  assert {
+    condition = (
+      azurerm_linux_web_app.app.app_settings["REQUEST_CHALLENGE_SECRET"] == "test-request-challenge-secret-at-least-32-chars" &&
+      azurerm_linux_web_app.app.app_settings["PUBLIC_SITE_ORIGIN"] == "https://quest-tour.example"
+    )
+    error_message = "the game request form needs REQUEST_CHALLENGE_SECRET and PUBLIC_SITE_ORIGIN (CORS) in the app settings"
   }
   assert {
     condition     = azurerm_postgresql_flexible_server.db.authentication[0].password_auth_enabled == false && azurerm_postgresql_flexible_server.db.authentication[0].active_directory_auth_enabled == true

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
-from questtour.admin.crud import get_admin_host_id, handle_integrity, require_fresh
+from questtour.admin.crud import get_admin_host_id, handle_integrity, issue_token, require_fresh
 from questtour.admin.errors import AdminValidationError, FieldError
 from questtour.admin.schemas import (
     AssignmentCreate,
@@ -20,7 +20,6 @@ from questtour.auth import AdminSession, require_admin
 from questtour.clock import utc_now
 from questtour.models import Assignment, Game, Team
 from questtour.sync.schema import parse_window_time
-from questtour.tokens import generate_token, hash_token
 
 router = APIRouter(prefix="/teams", tags=["admin-teams"])
 
@@ -165,7 +164,7 @@ def update_team_assignments(
         for a in session.scalars(select(Assignment).where(Assignment.team_id == id)).all()
     }
 
-    reveals: list[TokenReveal] = []
+    to_issue: list[Assignment] = []
     seen_games: set[int] = set()
 
     for game_id, a in by_game.items():
@@ -185,16 +184,7 @@ def update_team_assignments(
         assignment.exit_message = a.exit_message
 
         if is_new or assignment.token_hash is None:
-            token = generate_token()
-            assignment.token_hash = hash_token(token)
-            assignment.issued_at = utc_now()
-            reveals.append(
-                TokenReveal(
-                    assignment_id=assignment.id or 0,
-                    token=token,
-                    url=f"{request.app.state.settings.public_base_url.rstrip('/')}/play/{token}",
-                )
-            )
+            to_issue.append(assignment)
 
     for game_id, assignment in existing.items():
         if game_id not in seen_games and assignment.token_hash is not None:
@@ -202,13 +192,9 @@ def update_team_assignments(
             assignment.issued_at = None
 
     team.updated_at = utc_now()
+    session.flush()  # new assignments get their ids for the reveals
+    now = utc_now()
+    base_url = request.app.state.settings.public_base_url
+    reveals = [issue_token(assignment, base_url, now) for assignment in to_issue]
     session.commit()
-
-    for reveal in reveals:
-        if reveal.assignment_id == 0:
-            row = session.scalar(
-                select(Assignment).where(Assignment.token_hash == hash_token(reveal.token))
-            )
-            reveal.assignment_id = row.id
-
     return reveals

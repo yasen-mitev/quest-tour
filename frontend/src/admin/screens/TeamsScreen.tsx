@@ -5,6 +5,7 @@ import { ConfirmDialog } from "../components/ConfirmDialog";
 import { EntityForm } from "../components/EntityForm";
 import type { FieldDef } from "../components/EntityForm";
 import { FieldErrorList } from "../components/FieldErrorList";
+import { TokenLink } from "../components/TokenLink";
 import type { AssignmentCreate, AssignmentOut, Game, Team, TeamInput, TokenReveal } from "../types";
 
 type TeamForm = {
@@ -359,26 +360,7 @@ export function TeamsScreen({ subPath }: { subPath: string }) {
                         <span className="t-caption">Token issued</span>
                       )}
                       {revealedTokens[a.id ?? -1] && (
-                        <div className="admin-row-actions">
-                          <a
-                            className="t-body"
-                            href={revealedTokens[a.id ?? -1].url}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            {revealedTokens[a.id ?? -1].url}
-                          </a>
-                          <button
-                            type="button"
-                            className="qc-btn qc-btn--secondary"
-                            onClick={() =>
-                              navigator.clipboard.writeText(revealedTokens[a.id ?? -1].url)
-                            }
-                            disabled={busy}
-                          >
-                            Copy
-                          </button>
-                        </div>
+                        <TokenLink reveal={revealedTokens[a.id ?? -1]} busy={busy} />
                       )}
                       <button
                         type="button"

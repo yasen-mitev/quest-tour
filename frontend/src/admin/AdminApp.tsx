@@ -8,6 +8,7 @@ import { GamesScreen } from "./screens/GamesScreen";
 import { LandmarksScreen } from "./screens/LandmarksScreen";
 import { LoginScreen } from "./screens/LoginScreen";
 import { PhotosScreen } from "./screens/PhotosScreen";
+import { RequestsScreen } from "./screens/RequestsScreen";
 import { TeamsScreen } from "./screens/TeamsScreen";
 
 function AdminNotFound() {
@@ -31,6 +32,9 @@ export function AdminApp({ path }: { path: string }) {
       break;
     case "login":
       return <LoginScreen />;
+    case "requests":
+      screen = <RequestsScreen subPath={rest} />;
+      break;
     case "landmarks":
       screen = <LandmarksScreen subPath={rest} />;
       break;

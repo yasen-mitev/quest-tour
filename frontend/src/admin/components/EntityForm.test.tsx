@@ -306,4 +306,26 @@ describe("EntityForm", () => {
 
     vi.unstubAllGlobals();
   });
+
+  it("renders a checkbox field and submits a boolean", async () => {
+    const user = userEvent.setup();
+    const onDirty = vi.fn();
+    render(
+      <EntityForm
+        fields={[{ name: "open", label: "Open to all", type: "checkbox" as const }]}
+        initial={{ open: false }}
+        onSubmit={onSubmit}
+        onDirtyChange={onDirty}
+        submitLabel="Save"
+      />,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: "Open to all" });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(onDirty).toHaveBeenLastCalledWith(true);
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onSubmit).toHaveBeenCalledWith({ open: true });
+  });
 });

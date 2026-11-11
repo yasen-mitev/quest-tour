@@ -228,3 +228,32 @@ describe("team photos query params", () => {
     expect(url).toBe("/api/admin/photos");
   });
 });
+
+describe("game requests", () => {
+  it("lists pending requests by default and other statuses on request", async () => {
+    await adminApi.gameRequests();
+    expect(lastFetchCall()[0]).toBe("/api/admin/requests?status=pending");
+    await adminApi.gameRequests("all");
+    expect(lastFetchCall()[0]).toBe("/api/admin/requests?status=all");
+  });
+
+  it("posts seen_at to approve and reject", async () => {
+    await adminApi.approveGameRequest(5, "2026-11-01T09:00:00Z");
+    let [url, options] = lastFetchCall();
+    expect(url).toBe("/api/admin/requests/5/approve");
+    expect(options.method).toBe("POST");
+    expect(JSON.parse(options.body as string)).toEqual({ seen_at: "2026-11-01T09:00:00Z" });
+
+    await adminApi.rejectGameRequest(5, "2026-11-01T09:00:00Z");
+    [url, options] = lastFetchCall();
+    expect(url).toBe("/api/admin/requests/5/reject");
+    expect(options.method).toBe("POST");
+  });
+
+  it("puts edits to the request", async () => {
+    await adminApi.updateGameRequest(5, { game_id: 10, exit_message: null, teams: [] });
+    const [url, options] = lastFetchCall();
+    expect(url).toBe("/api/admin/requests/5");
+    expect(options.method).toBe("PUT");
+  });
+});

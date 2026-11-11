@@ -13,6 +13,7 @@ from questtour.admin.router_assignments import router as assignments_router
 from questtour.admin.router_feedback import router as feedback_router
 from questtour.admin.router_games import router as games_router
 from questtour.admin.router_landmarks import router as landmarks_router
+from questtour.admin.router_requests import router as requests_router
 from questtour.admin.router_teams import router as teams_router
 
 admin_router.include_router(landmarks_router)
@@ -23,6 +24,7 @@ admin_router.include_router(photos_router)
 admin_router.include_router(albums_router)
 admin_router.include_router(feedback_router)
 admin_router.include_router(account_router)
+admin_router.include_router(requests_router)
 
 
 @admin_router.get("/seed-error")
