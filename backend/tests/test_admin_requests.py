@@ -20,7 +20,6 @@ EXIT_MESSAGE = "Thanks for playing with us!"
 PLAY_DATE = date(2026, 10, 14)  # the FakeClock's day; Europe/Sofia is UTC+3 then
 DAY_START = "2026-10-13T21:00:00Z"
 DAY_END = "2026-10-14T20:59:59Z"
-GONE_GAME_ID = 9999  # SQLite does not enforce the FK, so a deleted game leaves a dangling id
 
 
 @pytest.fixture
@@ -127,7 +126,7 @@ def test_list_filter(admin, seed, session_factory, clock):
     older = _store(session_factory, game_id=seed.game_id, created_at=now - timedelta(hours=3))
     gone = _store(
         session_factory,
-        game_id=GONE_GAME_ID,
+        game_id=None,  # a deleted game leaves NULL behind (ON DELETE SET NULL)
         created_at=now - timedelta(hours=1),
         teams=[_team("A", "a"), _team("B", "b")],
         play_date=date(2026, 10, 20),
@@ -154,7 +153,7 @@ def test_list_filter(admin, seed, session_factory, clock):
         "id": gone,
         "created_at": "2026-10-14T07:00:00Z",
         "contact_name": "Maria Ivanova",
-        "game_id": GONE_GAME_ID,
+        "game_id": None,
         "game_name": None,
         "play_date": "2026-10-20",
         "team_count": 2,
@@ -234,14 +233,14 @@ def test_detail(admin, seed, session_factory, clock):
 
 
 def test_detail_without_game_leaves_default_windows_unresolved(admin, session_factory, clock):
-    request_id = _store(session_factory, game_id=GONE_GAME_ID, created_at=clock.now)
+    request_id = _store(session_factory, game_id=None, created_at=clock.now)
     body = admin.get(f"{BASE}/{request_id}").json()
     assert (body["game_name"], body["game_time_zone"]) == (None, None)
     assert (body["teams"][0]["valid_from"], body["teams"][0]["valid_until"]) == (None, None)
 
 
 def test_put_edits_pending_request(admin, seed, session_factory, clock):
-    request_id = _store(session_factory, game_id=GONE_GAME_ID, created_at=clock.now)
+    request_id = _store(session_factory, game_id=None, created_at=clock.now)
 
     response = admin.put(
         f"{BASE}/{request_id}",
@@ -392,9 +391,8 @@ def test_approve_uses_the_request_exit_message(admin, seed, session_factory, clo
         assert session.get(Assignment, reveal["assignment_id"]).exit_message == "Custom bye"
 
 
-@pytest.mark.parametrize("game_id", [None, GONE_GAME_ID])
-def test_approve_with_missing_game_422(admin, session_factory, clock, game_id):
-    request_id = _store(session_factory, game_id=game_id, created_at=clock.now)
+def test_approve_with_missing_game_422(admin, session_factory, clock):
+    request_id = _store(session_factory, game_id=None, created_at=clock.now)
     before = _counts(session_factory)
 
     response = admin.post(f"{BASE}/{request_id}/approve", json={})
